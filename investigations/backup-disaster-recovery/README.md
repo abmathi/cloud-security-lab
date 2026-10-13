@@ -465,3 +465,166 @@ This demonstrated a successful infrastructure-level recovery outcome consistent 
 The preserved evidence did not independently verify the specific backup image, restored data integrity, application functionality, or recovery performance objectives.
 
 The next phase examines restoration into an alternate Google Cloud project to demonstrate a broader disaster recovery deployment scenario.
+
+### Finding 4 — Cross-Project Compute Engine Disaster Recovery
+
+#### Investigation Context
+
+Following the same-project recovery exercise, the final phase involved restoring the protected Compute Engine workload into a separate Google Cloud project.
+
+The objective was to demonstrate an alternate recovery destination and evaluate the resulting infrastructure deployment.
+
+The source workload, `lab-vm`, originated from project `qwiklabs-gcp-04-19030dcfdf93` in `europe-west1-b`.
+
+The recovery exercise used a second Google Cloud project, `qwiklabs-gcp-01-db14fed18f62`, with the destination zone `us-east4-b`.
+
+This provided a broader recovery scenario than restoring an instance within the original project and zone.
+
+#### Cross-Project IAM Preparation
+
+The prescribed recovery workflow required authorizing the backup/recovery appliance's service account to perform recovery operations in the destination project.
+
+The lab instructions directed the following steps:
+
+1. Opening **IAM & Admin → IAM** in the original project.
+2. Locating the **Backup DR Appliance Service Account**.
+3. Copying the appliance service account's email address.
+4. Switching to the destination project, `qwiklabs-gcp-01-db14fed18f62`.
+5. Granting the source project's appliance service account access to the destination project.
+6. Assigning the **Backup and DR Compute Engine Operator** role.
+7. Assigning the **Backup and DR Cloud Storage Operator** role.
+8. Saving the IAM configuration before initiating recovery.
+
+These roles were specified by the lab to support the cross-project restoration workflow.
+
+The preserved screenshot does not show the IAM permissions page or the final service account role assignments.
+
+Therefore, these permissions are documented as prescribed steps rather than independently verified IAM configuration evidence.
+
+#### Alternate-Project Recovery Procedure
+
+After preparing the destination project's permissions, the lab instructed me to initiate a recovery operation using the Backup and DR management console.
+
+The prescribed workflow involved:
+
+1. Navigating to **Backup & Recover → Recover**.
+2. Selecting the protected source VM, `lab-vm`.
+3. Reviewing the available backup images.
+4. Selecting a recovery image.
+5. Choosing **Mount → Mount as new GCE instance**.
+6. Changing the destination project to `qwiklabs-gcp-01-db14fed18f62`.
+7. Setting the recovered instance name to `lab-vm-project2`.
+8. Selecting the destination region `us-east4`.
+9. Selecting the destination zone `us-east4-b`.
+10. Submitting the mount operation.
+11. Reviewing the recovery job through Job Monitor.
+12. Opening Compute Engine in the destination project to verify the recovered VM.
+
+The procedure was intended to deploy a new Compute Engine instance using an available backup image.
+
+The preserved screenshot documents the resulting destination VM rather than the selected recovery image or recovery job execution.
+
+#### Cross-Project Recovery Verification
+
+I opened Compute Engine → VM instances in the alternate Google Cloud project.
+
+The preserved screenshot displayed the following configuration:
+
+| Recovery Attribute | Observed Value |
+| --- | --- |
+| Destination project | `qwiklabs-gcp-01-db14fed18f62` |
+| Recovered instance | `lab-vm-project2` |
+| Region | `us-east4` |
+| Zone | `us-east4-b` |
+| Instance status | Running |
+| Internal IP address | `10.150.0.2` |
+| External IP address | Not displayed |
+| Connection option | SSH |
+| Backup image identifier | Not visible |
+| Recovery job completion details | Not visible |
+| Application validation results | Not visible |
+
+![Cross-project Compute Engine recovery](evidence/04-cross-project-vm-recovery-verification.png)
+
+*Figure 4 — Compute Engine VM instances page showing `lab-vm-project2` running in alternate project `qwiklabs-gcp-01-db14fed18f62`, in zone `us-east4-b`, with internal IP address `10.150.0.2`.*
+
+The screenshot showed a green running-status indicator for `lab-vm-project2`.
+
+The selected Google Cloud project was different from the original project's identifier.
+
+The recovered instance also resided in a different geographic region from the source environment.
+
+These observations support the conclusion that the exercise resulted in a running Compute Engine instance in the designated alternate project and region.
+
+#### Recovery Location Comparison
+
+The investigation documented two recovery destinations.
+
+| Recovery Attribute | Same-Project Recovery | Alternate-Project Recovery |
+| --- | --- | --- |
+| Source workload | `lab-vm` | `lab-vm` |
+| Destination project | `qwiklabs-gcp-04-19030dcfdf93` | `qwiklabs-gcp-01-db14fed18f62` |
+| Recovered instance | `lab-vm-recovered` | `lab-vm-project2` |
+| Destination region | `europe-west1` | `us-east4` |
+| Destination zone | `europe-west1-b` | `us-east4-b` |
+| Observed instance status | Running | Running |
+| Infrastructure-level recovery result | Recovered VM visible | Recovered VM visible |
+| Application-level recovery | Not independently verified | Not independently verified |
+
+The first recovery demonstrated a separate VM running in the original project.
+
+The second recovery demonstrated a separate VM running in an alternate project and region.
+
+Together, the screenshots provided evidence of infrastructure deployment at both recovery destinations.
+
+#### Security and Disaster Recovery Implications
+
+Cross-project restoration can support disaster recovery planning by providing an alternate destination for restored infrastructure.
+
+This approach may be valuable when recovery within the original project is unavailable or undesirable.
+
+Restoration into a different region can also reduce dependence on the original regional environment.
+
+However, cross-project restoration introduces additional security and operational considerations.
+
+**Identity and access management**
+
+The recovery service account must have the permissions required to operate in the destination project.
+
+Those permissions should be reviewed and limited to the authorized recovery workflow.
+
+**Recovery image security**
+
+Recovery images should be protected against unauthorized modification or deletion.
+
+A recovery image also requires integrity validation before it can be considered trustworthy following a security incident.
+
+**Network and application dependencies**
+
+A recovered VM may depend on external services, firewall rules, IAM configurations, DNS records, databases, and other infrastructure.
+
+A Running status does not establish that those dependencies have been restored.
+
+**Recovery objectives**
+
+The screenshot does not provide the recovery-image timestamp, time required to restore the VM, or results of application testing.
+
+Consequently, achieved Recovery Point Objective (RPO) and Recovery Time Objective (RTO) values cannot be calculated from the preserved evidence.
+
+**Administrative isolation**
+
+A separate Google Cloud project can provide an additional administrative boundary.
+
+However, project separation alone does not establish that the recovery environment is isolated from every threat affecting the original project.
+
+#### Analyst Assessment
+
+**Assessment: Cross-project recovery instance `lab-vm-project2` verified as running in an alternate Google Cloud project and region.**
+
+The Compute Engine screenshot showed the recovered instance in project `qwiklabs-gcp-01-db14fed18f62`, located in `us-east4-b`, with internal IP `10.150.0.2`.
+
+This result was consistent with the prescribed cross-project Backup and DR recovery procedure.
+
+Together with the same-project recovery evidence, the investigation demonstrated infrastructure-level recovery outcomes across two Google Cloud projects and two regions.
+
+The preserved evidence did not independently establish the selected backup image, restored data integrity, application availability, IAM role assignments, or achieved recovery objectives.
