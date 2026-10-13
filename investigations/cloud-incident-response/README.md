@@ -170,3 +170,94 @@ The initial SCC review established a baseline of visible cloud security findings
 The results supported prioritization of network controls, virtual machine security, and storage permissions.
 
 The next phase examines PCI DSS compliance findings to identify additional control weaknesses relevant to the simulated incident.
+
+### Finding 2 — Initial PCI DSS 3.2.1 Compliance Assessment
+
+#### Investigation Context
+
+After reviewing the initial Security Command Center misconfiguration overview, I examined the project's PCI DSS 3.2.1 compliance report.
+
+The simulated Cymbal Retail incident involved infrastructure and storage configurations that could expose sensitive customer information.
+
+The objective was to identify relevant compliance-control findings, establish a pre-remediation baseline, and determine which security weaknesses required additional investigation.
+
+#### Initial Compliance Report
+
+I navigated to Security Command Center → Compliance and opened the PCI DSS 3.2.1 report.
+
+The preserved screenshot was dated September 21, 2026, and displayed a one-month reporting period.
+
+The report showed the following non-compliant controls:
+
+| PCI DSS Control | Reported Status | Finding Count |
+| --- | --- | ---: |
+| `10.1` | Non-compliant | 29 |
+| `10.2` | Non-compliant | 29 |
+| `1.2.1` | Non-compliant | 2 |
+| `7.1.2` | Non-compliant | 1 |
+| `7.2` | Non-compliant | 1 |
+
+![Initial PCI DSS 3.2.1 compliance report](evidence/02-initial-pci-dss-compliance-report.png)
+
+*Figure 2 — Initial Security Command Center PCI DSS 3.2.1 report showing five non-compliant controls and their associated finding counts before remediation.*
+
+The report also displayed several controls marked Compliant with zero associated findings.
+
+The visible table established that five listed controls were assessed as Non-compliant at the time of the screenshot.
+
+The finding counts represent associations shown in the compliance report and should not be interpreted as a count of unique vulnerabilities or affected resources.
+
+#### Security Weaknesses Identified in the Lab
+
+The lab instructions identified several security configuration concerns relevant to the simulated incident.
+
+| Security Configuration | Risk Described in the Lab |
+| --- | --- |
+| Firewall rule logging disabled | Reduced visibility into traffic allowed or denied by firewall rules |
+| RDP exposed to all IP addresses | Potential external access to TCP port `3389` |
+| SSH exposed to all IP addresses | Potential external access to TCP port `22` |
+| VM assigned a public IP address | Increased exposure of the virtual machine to internet-originated traffic |
+| Public Cloud Storage bucket access | Potential unauthorized access to data stored in the bucket |
+| Default service account with broad API access scopes | Excessive potential API access, subject to the account's IAM permissions |
+
+These concerns were described in the original exercise instructions.
+
+The preserved PCI DSS screenshot did not expand the individual controls to show their associated rules. Therefore, the table above documents the lab's prescribed investigation context rather than independently verified mappings between each listed control and a particular misconfiguration.
+
+The lab also described other findings, including disabled VPC Flow Logs, overly permissive basic IAM roles, and missing egress-deny rules.
+
+Not every identified weakness was addressed during the exercise.
+
+#### Initial Remediation Priorities
+
+Based on the simulated incident scenario and the security weaknesses described in the lab, I prioritized the following areas:
+
+1. **Compute Engine recovery:** Review the affected virtual machine and follow the prescribed snapshot-based restoration procedure.
+2. **Cloud Storage security:** Remove unnecessary public access and strengthen bucket-level authorization controls.
+3. **Network access restrictions:** Replace overly permissive administrative-access rules with restricted SSH access.
+4. **Firewall visibility:** Enable appropriate firewall rule logging.
+5. **Post-remediation assessment:** Reevaluate the compliance report to determine whether relevant security findings changed.
+
+These priorities were guided by the lab scenario and the initial Security Command Center findings.
+
+They do not establish that any particular misconfiguration was independently proven to be the cause of the simulated data breach.
+
+#### Compliance Interpretation
+
+The report was useful for identifying cloud-security control weaknesses and prioritizing remediation.
+
+However, a Security Command Center compliance report represents an automated assessment of supported checks.
+
+It does not independently establish an organization's complete compliance with PCI DSS requirements or constitute a formal certification or assessment of the cardholder data environment.
+
+Furthermore, a control's displayed Compliant status should be interpreted within the scope of the checks and resources evaluated by Security Command Center.
+
+#### Analyst Assessment
+
+**Assessment: Five PCI DSS 3.2.1 controls displayed as Non-compliant in the initial Security Command Center report.**
+
+The report established a baseline of control findings before the documented remediation activities.
+
+The original lab instructions identified network exposure, storage permissions, VM configuration, and logging as priority concerns.
+
+The next investigation phase examines the affected cloud resources and the findings associated with those risks.
