@@ -530,3 +530,105 @@ The evidence established the principal and broad role targeted for remediation.
 The lab instructions documented the intended removal procedure, while the screenshot captured the edit stage.
 
 The investigation supports the remediation decision, but the preserved evidence does not independently establish completion of the IAM policy update.
+
+### Finding 6 — Independent IAM Policy-Change Correlation
+
+#### Investigation Context
+
+After completing the guided Event Threat Detection investigation, I independently expanded the Cloud Audit Logs analysis beyond the specific ownership invitation method.
+
+The guided exercise focused on the `InsertProjectOwnershipInvite` event associated with the suspicious external IAM grant.
+
+The independent investigation addressed a broader question:
+
+**What other IAM administrative operations occurred around the suspicious ownership invitation?**
+
+The objective was to identify related administrative activity that might provide additional context for the detected event.
+
+#### Expanded Logs Explorer Query
+
+I removed the method-specific filter and retained the IAM policy permission filter:
+
+```text
+protoPayload.authorizationInfo.permission="resourcemanager.projects.setIamPolicy"
+```
+
+This broadened the search beyond `InsertProjectOwnershipInvite` while preserving the focus on IAM-policy-related administrative activity.
+
+The query returned three matching records.
+
+#### Correlated Administrative Activity
+
+The results contained three Resource Manager events recorded on September 21, 2026.
+
+| Timestamp (MST) | Administrative Method | Recorded Principal |
+| --- | --- | --- |
+| `16:26:32.471` | `CheckInvitationRequired` | Qwiklabs student account |
+| `16:26:32.672` | `InsertProjectOwnershipInviteForPantheon` | Qwiklabs student account |
+| `16:26:32.710` | `InsertProjectOwnershipInvite` | Qwiklabs student account |
+
+![Independent IAM policy-change investigation](evidence/08-independent-iam-policy-correlation.png)
+
+*Figure 8 — Expanded Logs Explorer query identifying three IAM-policy-related operations associated with the same student principal and training project within approximately 239 milliseconds.*
+
+All three visible event summaries referenced the same training project and the same student principal.
+
+The timestamps placed the records within approximately 239 milliseconds of one another.
+
+The records were therefore temporally and contextually associated with the same ownership-invitation workflow.
+
+#### Investigative Interpretation
+
+The expanded query revealed more activity than the detector-specific search.
+
+The results showed three methods associated with the project ownership invitation process:
+
+1. `CheckInvitationRequired` — an operation associated with determining whether an invitation is required.
+2. `InsertProjectOwnershipInviteForPantheon` — an additional ownership-invitation-related method.
+3. `InsertProjectOwnershipInvite` — the operation associated with the Event Threat Detection finding.
+
+The event names and close timing were consistent with related stages of an administrative invitation workflow.
+
+However, the screenshot displayed event summaries rather than fully expanded audit payloads for every record.
+
+Therefore, the evidence does not independently establish the internal execution sequence, success status, or complete request parameters of each operation.
+
+The correlation supports treating these records as related investigative context rather than proof of a specific undocumented cloud service workflow.
+
+#### Value of Broadening the Investigation
+
+The original alert directed attention to a single administrative method.
+
+By removing the exact-method filter, I identified additional IAM-related operations performed by the same principal within the same short time period.
+
+This approach is useful in SOC investigations because security alerts often represent one event within a larger administrative or authentication sequence.
+
+Examining surrounding events can help analysts:
+
+- Reconstruct activity preceding or accompanying the detected operation.
+- Identify additional methods associated with the same principal.
+- Compare related administrative activity across a narrow time window.
+- Determine whether further audit-log inspection is warranted.
+- Avoid treating a detection as an isolated event without surrounding context.
+
+#### Security Relevance
+
+Unexpected project ownership invitations are security-sensitive because they may introduce highly privileged external identities into a cloud environment.
+
+Correlating related IAM operations provides additional context for investigating how such an invitation was initiated.
+
+In a production investigation, further analysis should examine the complete audit payloads, effective IAM policy, invitation acceptance state, approved change records, and any subsequent activity by the recipient.
+
+The three visible events did not independently establish invitation acceptance, successful external authentication, or misuse of project resources.
+
+The activity was intentionally generated in an authorized training environment.
+
+#### Analyst Assessment
+
+**Assessment: Three IAM-policy-related administrative records independently correlated around the external ownership invitation.**
+
+The expanded Logs Explorer query identified three Resource Manager operations associated with the same recorded principal and training project within approximately 239 milliseconds.
+
+The investigation demonstrated how broadening a detector-specific query can reveal surrounding administrative activity and improve alert context.
+
+The evidence supports correlation of the recorded operations, but not a claim of confirmed malicious activity or successful external account access.
