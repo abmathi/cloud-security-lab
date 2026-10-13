@@ -153,3 +153,106 @@ The findings were categorized as threats and associated with the same Google Clo
 The initial triage established a basis for investigating IAM permission changes but did not independently determine whether either grant was malicious.
 
 Further examination of the finding details and audit records was required to distinguish expected provisioning from suspicious external access.
+
+### Finding 2 — Expected IAM Provisioning Activity Analysis
+
+#### Investigation Context
+
+The second phase examined the earlier of the two high-severity IAM anomalous grant findings.
+
+The objective was to determine whether the detected Owner role assignment represented suspicious activity or an expected administrative operation within the training environment.
+
+The lab instructions explained that the Google Cloud project was provisioned with student accounts receiving project-level Owner permissions through an automated service account.
+
+Although this activity triggered Event Threat Detection, the provisioned users belonged to the expected Qwiklabs training environment.
+
+#### Finding Summary Analysis
+
+I opened the earlier `Persistence: IAM anomalous grant` finding and reviewed its summary.
+
+| Field | Observed Value |
+| --- | --- |
+| Finding category | `Persistence: IAM anomalous grant` |
+| Finding state | Active |
+| Severity | High |
+| Event time | September 21, 2026, 1:39:49 PM GMT-7 |
+| Administrative method | `SetIamPolicy` |
+| Calling principal | Qwiklabs provisioning service account |
+| Service | `cloudresourcemanager.googleapis.com` |
+| Affected resource | Google Cloud training project |
+| User agent | Terraform Google provider through `google-api-go-client` |
+
+![Expected IAM grant finding summary](evidence/02-expected-iam-grant-summary.png)
+
+*Figure 2 — Security Command Center summary of the earlier high-severity IAM anomalous grant, showing a provisioning service account performing a SetIamPolicy operation.*
+
+The finding described a sensitive IAM role being granted through a service account.
+
+The use of a provisioning service account and Terraform-related user agent was consistent with the lab's automated project setup.
+
+However, these characteristics alone would not prove that an IAM change was authorized in a production environment.
+
+#### Source Properties Investigation
+
+I examined the finding's Source properties tab and expanded:
+
+`properties → sensitiveRoleGrant`
+
+The source properties included the following information:
+
+| Property | Observed Value |
+| --- | --- |
+| Grant action | `ADD` |
+| Granted role | `roles/owner` |
+| Granting principal | Qwiklabs provisioning service account |
+| Receiving member | User associated with the `qwiklabs.net` training domain |
+| Detection priority | High |
+| Detection indicator | `iam_anomalous_grant` |
+
+![Expected IAM role grant source properties](evidence/03-expected-iam-grant-source-properties.png)
+
+*Figure 3 — Event Threat Detection source properties showing an ADD action for roles/owner assigned to a Qwiklabs training-domain user.*
+
+The nested `bindingDeltas` and `members` properties identified the Owner role grant and its associated receiving identity.
+
+These properties were important because they distinguished the account performing the administrative change from the account receiving the new permissions.
+
+The preserved source properties showed the training user as the recipient of the sensitive role grant.
+
+#### Contextual Triage Assessment
+
+The role assignment was security-relevant because `roles/owner` provides broad project-level privileges.
+
+Event Threat Detection correctly identified the grant as matching a sensitive IAM-change pattern.
+
+However, the original scenario established that the training environment automatically provisioned project Owner permissions to Qwiklabs-associated student accounts.
+
+The observed service account, Terraform-related user agent, and receiving member were consistent with that expected setup.
+
+Consequently, I classified the event as **expected administrative provisioning activity within the authorized training scenario**.
+
+This conclusion relied on the documented lab context as well as the visible finding details.
+
+In a production investigation, an analyst would need to verify the change against trusted provisioning records, approved workflows, and the intended access requirements before treating a similar event as benign.
+
+#### Security Relevance
+
+High-severity findings require contextual validation rather than automatic classification as incidents.
+
+A legitimate automation system may perform operations that resemble suspicious access changes.
+
+At the same time, an attacker could potentially misuse a legitimate service account or automation mechanism.
+
+For that reason, a recognizable service account name or Terraform user agent should be treated as contextual evidence rather than conclusive proof of authorization.
+
+#### Analyst Assessment
+
+**Assessment: Earlier high-severity IAM finding classified as expected provisioning activity in the documented lab context.**
+
+The finding recorded a sensitive Owner role grant performed by a Qwiklabs-associated provisioning service account.
+
+The source properties identified an expected training-domain user as the recipient.
+
+The grant was consistent with the lab's authorized provisioning process, despite matching the Event Threat Detection anomalous-grant pattern.
+
+The next phase examines the later finding involving an external account, where the recipient's identity and authorization context differ.
