@@ -294,3 +294,94 @@ The service account's Keys tab displayed no remaining key records following the 
 This verified the post-remediation state of the key inventory, but did not independently confirm SCC finding closure or changes to the account's IAM permissions.
 
 Further review was therefore warranted to assess remaining privilege-related risks.
+
+### Finding 4 — Independent IAM Excessive Privilege Assessment
+
+#### Investigation Context
+
+After verifying the removal of the user-managed service account key, I performed an independent review of the affected service account's IAM permissions.
+
+The guided Security Command Center exercise focused on identifying and remediating a user-managed authentication key.
+
+However, the lab setup had also assigned the test service account the project-level Basic Owner role.
+
+The independent investigation addressed a separate security question:
+
+**Did the service account retain excessive privileges after its user-managed authentication key was removed?**
+
+#### IAM Permission Review
+
+I navigated to IAM & Admin, opened the `test-account` service account, and selected the **Principals with access** tab.
+
+The interface displayed identities with access to the service account, including inherited project-level role grants.
+
+The selected row identified the test service account itself and displayed its Owner role.
+
+| IAM Attribute | Observed Value |
+| --- | --- |
+| Service account | `test-account` |
+| Principal type | Service account |
+| Assigned role | Basic Owner |
+| Grant scope | Project-level |
+| Role visible during review | Yes |
+| Role removal performed | No |
+
+![Service account project-level Owner permissions](evidence/04-service-account-owner-privileges.png)
+
+*Figure 4 — Google Cloud IAM view showing the `test-account` service account associated with a project-level Owner role. The independent review confirms that the broad permission assignment remained visible after the user-managed key remediation.*
+
+The independent review confirmed that the account's Owner role remained visible after the key-removal procedure.
+
+This was a separate configuration concern from the user-managed key identified by Security Command Center.
+
+#### Excessive Privilege Analysis
+
+The Google Cloud Basic Owner role provides broad administrative permissions across project resources and services.
+
+Assigning this role to a service account can increase the potential impact of credential compromise or misuse, especially if the account does not require administrative access for its intended workload.
+
+The test service account was created for a controlled exercise. The evidence does not establish that its privileges were abused or that unauthorized activity occurred.
+
+However, the broad Owner assignment illustrated a least-privilege concern.
+
+A production review would need to establish the service account's legitimate operational requirements before selecting an appropriately restricted replacement role.
+
+#### Credential Remediation Versus Access Remediation
+
+The investigation identified two distinct security concerns:
+
+| Security Concern | Observed State | Assessment |
+| --- | --- | --- |
+| User-managed JSON authentication key | No keys visible after deletion | Key inventory remediation verified |
+| Project-level Owner role | Owner grant remained visible | Excessive privilege concern remained unremediated |
+
+Deleting the user-managed key prevents that specific key from being used for authentication.
+
+It does not automatically remove IAM bindings or prevent authentication through every other mechanism available to the service account.
+
+As a result, the credential-management finding and the account's broad permissions require separate assessment.
+
+#### Recommended Least-Privilege Remediation
+
+For a production service account, the next steps would be to:
+
+1. Identify the application's legitimate resource-access requirements.
+2. Review the service account's existing IAM grants.
+3. Replace the Basic Owner assignment with the minimum appropriate predefined or custom roles.
+4. Validate that required application operations continue to function.
+5. Review the account's remaining authentication mechanisms.
+6. Monitor relevant IAM and administrative activity after the changes.
+
+These steps are recommendations rather than actions completed during this investigation.
+
+I intentionally preserved the lab's IAM configuration after collecting evidence because changing project roles was outside the required exercise and independent validation scope.
+
+#### Analyst Assessment
+
+**Assessment: Excessive project-level Owner permissions remained visible after key remediation.**
+
+The independent IAM review identified an additional security concern that was not resolved by removing the user-managed service account key.
+
+The investigation demonstrated why analysts should assess both authentication credentials and authorization privileges when reviewing service account findings.
+
+The key-removal procedure addressed the visible credential risk, while the broad IAM assignment remained a separate least-privilege issue requiring further remediation in a production environment.
