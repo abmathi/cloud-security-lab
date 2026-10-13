@@ -550,3 +550,98 @@ The post-remediation screenshot showed a nonpublic bucket with Public Access Pre
 This demonstrated a directly verifiable reduction in public exposure for the affected storage bucket.
 
 The next investigation phase examines restrictions applied to administrative network access.
+
+### Finding 6 — Restricted SSH Access and Firewall Rule Analysis
+
+#### Investigation Context
+
+The simulated Cymbal Retail incident identified overly permissive administrative network access as a security concern.
+
+Earlier Security Command Center findings reported that the default SSH and RDP firewall rules allowed potentially excessive network exposure.
+
+The lab's intended remediation was to restrict administrative SSH access using Google Cloud Identity-Aware Proxy (IAP) and reduce unnecessary public access.
+
+The objective of this investigation phase was to examine the resulting firewall rule and determine whether its recorded configuration supported that goal.
+
+#### Firewall Rule Configuration
+
+I reviewed the VPC firewall rule named `limit-ports` in the Google Cloud console.
+
+The preserved screenshot showed the following settings:
+
+| Firewall Attribute | Observed Configuration |
+| --- | --- |
+| Rule name | `limit-ports` |
+| VPC network | `default` |
+| Direction | Ingress |
+| Action on match | **Deny** |
+| Priority | `1000` |
+| Source IP range | `35.235.240.0/20` |
+| Target network tag | `cc` |
+| Protocol and port | `tcp:22` |
+| Firewall rule logging | On |
+| Enforcement | Enabled |
+
+![SSH firewall rule configuration](evidence/08-ssh-firewall-rule-configuration.png)
+
+*Figure 8 — Google Cloud VPC firewall rule `limit-ports` showing an enabled ingress Deny rule for TCP port 22 from `35.235.240.0/20`, targeting instances with the `cc` network tag and with logging enabled.*
+
+The firewall rule was enabled and scoped to instances carrying the `cc` network tag.
+
+It matched incoming TCP port 22 traffic originating from the specified source range.
+
+The source range `35.235.240.0/20` corresponds to Google Cloud IAP TCP forwarding.
+
+However, the configured action was **Deny**.
+
+#### Security Configuration Assessment
+
+The firewall rule's stated description indicated an intention to restrict SSH access to authorized source addresses.
+
+The configured action, however, denied matching SSH connections from the IAP source range.
+
+This is an important distinction because firewall rule intent and enforcement behavior are not necessarily the same.
+
+An ingress deny rule targeting the IAP source range does not enable IAP SSH access.
+
+Furthermore, the existence of this rule does not independently establish that other SSH ingress paths were blocked.
+
+Google Cloud VPC firewall behavior depends on applicable rules, priorities, targets, source ranges, and policy evaluation.
+
+A complete exposure assessment would therefore require reviewing the effective firewall rules associated with the target instance.
+
+#### Intended Secure Configuration
+
+For a production VM requiring SSH administration through IAP, an appropriate configuration would typically include:
+
+1. Removing or disabling unnecessarily broad SSH ingress rules.
+2. Creating an ingress **allow** rule for TCP port 22 from the IAP TCP forwarding range.
+3. Restricting that rule to the intended VM or target service account.
+4. Granting only authorized administrators the necessary IAP access permissions.
+5. Ensuring other network paths do not unintentionally expose SSH.
+6. Validating connectivity through the intended IAP workflow.
+7. Reviewing firewall rule logs and applicable audit records.
+
+These are recommended controls rather than configurations independently demonstrated by the screenshot.
+
+#### Firewall Logging
+
+The `limit-ports` rule displayed firewall rule logging as On.
+
+This indicated that logging was enabled for traffic evaluated against the rule, subject to Google Cloud logging behavior and the presence of matching traffic.
+
+The screenshot did not display actual firewall log entries.
+
+Therefore, the evidence supports the configured logging state but does not independently confirm successful traffic logging or SSH access attempts.
+
+#### Analyst Assessment
+
+**Assessment: Enabled SSH deny rule identified for the IAP source range, with firewall rule logging enabled.**
+
+The preserved configuration demonstrated a scoped ingress rule targeting TCP port 22 and instances with the `cc` network tag.
+
+However, the rule used the **Deny** action for the IAP TCP forwarding range.
+
+As a result, the screenshot does not establish that IAP-based SSH access was enabled or that the intended restricted-access configuration was successfully achieved.
+
+This finding illustrates the importance of verifying actual firewall actions, source ranges, priorities, and effective rules rather than relying on rule names or descriptions.
