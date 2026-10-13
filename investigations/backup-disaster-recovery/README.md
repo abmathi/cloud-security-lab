@@ -214,3 +214,128 @@ Despite the policy name, the configured schedule specified continuous backup exe
 The screenshot established the intended backup frequency and retention settings but did not independently confirm successful template saving, scheduled backup execution, or recovery-point integrity.
 
 The next phase examines enrollment of the source Compute Engine instance into the configured backup protection workflow.
+
+### Finding 2 — Compute Engine Workload Onboarding and Backup Protection
+
+#### Investigation Context
+
+After configuring the `vm-backup` backup template, the next phase involved enrolling the source Compute Engine instance in Google Cloud Backup and DR.
+
+The exercise required associating the VM with the backup/recovery appliance and applying the previously configured backup template.
+
+The objective was to establish that the source workload was registered for protection before attempting the disaster recovery procedures.
+
+#### Backup Appliance and IAM Preparation
+
+The supplied lab environment included a preconfigured backup/recovery appliance.
+
+Before onboarding the workload, the lab procedure instructed me to review the appliance's associated service account and confirm that the necessary Backup and DR permissions were available.
+
+The procedure specifically referenced the **Backup DR Appliance Service Account** and its assigned **Backup and DR Cloud Storage Operator** role.
+
+These permissions supported the authorized backup and restoration workflow.
+
+The preserved onboarding screenshot did not display the IAM role assignments or a separate service-account verification result.
+
+Therefore, the service-account review is documented as part of the prescribed procedure rather than independently verified configuration evidence.
+
+#### Compute Engine Onboarding Procedure
+
+Using the Backup and DR management console, I followed the guided onboarding process:
+
+1. Navigated to **Back Up & Recover → Back Up**.
+2. Selected the Backup DR Appliance Service Account credential.
+3. Selected the appropriate project and Compute Engine zone.
+4. Discovered the available Compute Engine instances.
+5. Selected the source virtual machine, `lab-vm`.
+6. Chose **Apply a backup template** as the onboarding action.
+7. Selected the previously configured `vm-backup` template.
+8. Completed the onboarding wizard.
+9. Reviewed the displayed completion status.
+
+The onboarding workflow was intended to associate the backup template with the source VM.
+
+The lab instructions explained that completion of this process triggers backup activity according to the selected policy.
+
+However, the preserved screenshot did not show an individual backup job or a completed snapshot.
+
+#### Onboarding Verification
+
+The final screen of the wizard displayed:
+
+**Onboarding finished successfully!**
+
+The following information was visible:
+
+| Onboarding Attribute | Observed Value |
+| --- | --- |
+| Workflow | Enable backups for Compute Engine VM instances |
+| Wizard stage | Finish |
+| Instance name | `lab-vm` |
+| Backup appliance | `qwiklabs-appliances-yn9a` |
+| Selected action | Apply a backup template |
+| Status | Green checkmark |
+| Completion message | Onboarding finished successfully |
+| Applied template name | Not displayed |
+| Backup job result | Not displayed |
+| Recovery image status | Not displayed |
+
+![Successful Compute Engine backup onboarding](evidence/02-compute-engine-backup-onboarding-success.png)
+
+*Figure 2 — Google Cloud Backup and DR onboarding completion page showing `lab-vm`, the selected Apply a backup template action, the backup appliance, and a successful status indicator.*
+
+The green status indicator established that the onboarding operation completed successfully.
+
+The selected action confirmed that the workflow was configured to apply a backup template to the VM.
+
+The lab procedure identified this template as `vm-backup`, but the screenshot did not independently show the exact template selected.
+
+The evidence therefore supports successful workload onboarding rather than independently verified backup completion.
+
+#### Backup Job Monitoring
+
+The lab instructions directed reviewing backup activity through:
+
+**Monitor → Jobs**
+
+This view can provide information about backup job execution and completion status.
+
+A successful backup job would provide stronger evidence that a recoverable image had been created.
+
+The preserved screenshot, however, showed only the onboarding completion page.
+
+It did not establish:
+
+- The exact time a backup job started or completed.
+- Whether an individual backup operation succeeded.
+- The size or integrity of the resulting backup image.
+- Whether subsequent scheduled backups executed successfully.
+- The age of the most recent recoverable image.
+
+These details would require additional backup-job records or recovery-image evidence.
+
+The later recovery stages provide separate evidence concerning the existence of restored Compute Engine instances.
+
+#### Security and Recovery Relevance
+
+Enrolling a virtual machine into a backup policy is a necessary administrative step in establishing workload protection.
+
+It connects the source resource with the backup infrastructure and defines how the configured policy should be applied.
+
+However, a workload being registered for backup does not automatically mean its data can be restored successfully.
+
+Effective disaster recovery requires verifying backup execution, recovery-image availability, restore permissions, restored-system integrity, and application functionality.
+
+The distinction between successful onboarding and verified recoverability is important when evaluating an organization's backup security posture.
+
+#### Analyst Assessment
+
+**Assessment: Compute Engine instance `lab-vm` successfully onboarded into the Google Cloud Backup and DR workflow.**
+
+The screenshot displayed a successful onboarding message and a green status indicator for `lab-vm`.
+
+The workflow showed the action **Apply a backup template**, associated with the backup appliance `qwiklabs-appliances-yn9a`.
+
+The lab instructions identified `vm-backup` as the intended template, but the screenshot did not independently display its name or prove that a backup job had completed.
+
+The next phase evaluates the same-project restoration procedure and the resulting recovered virtual machine.
