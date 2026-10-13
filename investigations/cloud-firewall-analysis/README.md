@@ -44,14 +44,21 @@ This was an authorized training exercise, not an investigation of a confirmed un
 
 ### Investigation Objectives
 
-1. Examine the supplied web-server and VPC environment.
-2. Review the configuration of HTTP and SSH firewall permissions.
-3. Generate and inspect HTTP traffic using VPC Flow Logs.
-4. Configure a firewall rule intended to deny inbound HTTP.
-5. Analyze firewall log records for denied connections.
-6. Review the firewall rule details associated with the observed traffic.
-7. Independently compare earlier allowed and later denied HTTP traffic.
-8. Assess the security implications and limitations of the recorded evidence.
+1\. Examine the supplied web-server and VPC environment.
+
+2\. Review the configuration of HTTP and SSH firewall permissions.
+
+3\. Generate and inspect HTTP traffic using VPC Flow Logs.
+
+4\. Configure a firewall rule intended to deny inbound HTTP.
+
+5\. Analyze firewall log records for denied connections.
+
+6\. Review the firewall rule details associated with the observed traffic.
+
+7\. Independently compare earlier allowed and later denied HTTP traffic.
+
+8\. Assess the security implications and limitations of the recorded evidence.
 
 ## Evidence Sources and Methodology
 
@@ -84,7 +91,7 @@ The existing VPC, subnet, and web server were supplied as part of the exercise.
 
 The lab instructions identify intended configurations and expected outcomes. The preserved screenshots provide evidence of selected firewall states and logged connections.
 
-The report will distinguish between prescribed steps, observed log events, and conclusions that would require additional verification.
+The report distinguishes between prescribed steps, observed log events, and conclusions that would require additional verification.
 
 A firewall log recording `DENIED` supports a conclusion about the specific connection represented by that event. It does not independently establish that all possible network paths or access attempts were blocked.
 
@@ -92,14 +99,17 @@ Likewise, the `ALLOWED` and `DENIED` comparison documents observed traffic behav
 
 ## Investigation Organization
 
-The report will document four findings:
+The report documents four findings:
 
-1. Initial HTTP Network Traffic and VPC Flow Log Analysis
-2. Firewall Rule Configuration and HTTP Denial
-3. Denied Connection Investigation and Firewall Rule Attribution
-4. Independent Before-and-After Traffic Validation
+1\. Initial HTTP Network Traffic and VPC Flow Log Analysis
 
-The final sections will summarize security implications, evidence limitations, skills demonstrated, and the supporting screenshot index.
+2\. Firewall Rule Configuration and HTTP Denial
+
+3\. Denied Connection Investigation and Firewall Rule Attribution
+
+4\. Independent Before-and-After Traffic Validation
+
+The final sections summarize security implications, evidence limitations, skills demonstrated, and the supporting screenshot index.
 
 ## Investigation Findings
 
@@ -124,8 +134,11 @@ I opened Google Cloud Logs Explorer and selected the VPC Flow Logs associated wi
 The preserved query included the following log source filters:
 
 ```text
+
 resource.type="gce_subnetwork"
+
 log_name="projects/qwiklabs-gcp-03-e4eca9aa31dd/logs/compute.googleapis.com%2Fvpc_flows"
+
 ```
 
 An additional source-IP condition was visible in the query editor, but the actual address was redacted in the screenshot.
@@ -154,7 +167,7 @@ I expanded the log entry and examined the connection and destination-instance fi
 
 ![Initial HTTP connection in VPC Flow Logs](evidence/01-initial-http-vpc-flow-log.png)
 
-*Figure 1 — Google Cloud Logs Explorer showing a VPC Flow Log entry for TCP traffic to destination IP `10.1.3.2` on port `80`, associated with the `web-server` instance. The source IP is redacted, and no firewall disposition is shown.*
+**Figure 1 — Google Cloud Logs Explorer showing a VPC Flow Log entry for TCP traffic to destination IP `10.1.3.2` on port `80`, associated with the `web-server` instance. The source IP is redacted, and no firewall disposition is shown.**
 
 The destination port `80` corresponded to HTTP traffic.
 
@@ -192,7 +205,7 @@ The distinction is important when validating security controls: evidence of traf
 
 #### Analyst Assessment
 
-**Assessment: Initial TCP traffic to the Apache web server's HTTP port identified in Google Cloud VPC Flow Logs.**
+****Assessment: Initial TCP traffic to the Apache web server's HTTP port identified in Google Cloud VPC Flow Logs.****
 
 The preserved log entry associated destination IP `10.1.3.2` and TCP port `80` with the `web-server` instance in `us-central1-a`.
 
@@ -218,8 +231,9 @@ I opened the VPC firewall rules page for the `vpc-net` network.
 
 The preserved screenshot displayed two enabled firewall rules:
 
-- `allow-http-ssh`
-- `deny-http`
+\- `allow-http-ssh`
+
+\- `deny-http`
 
 The following settings were visible:
 
@@ -235,7 +249,7 @@ The following settings were visible:
 
 ![HTTP allow and deny firewall rules](evidence/02-http-allow-deny-firewall-rules.png)
 
-*Figure 2 — Google Cloud VPC firewall list showing `allow-http-ssh` and `deny-http`, both targeting the `http-server` network tag with priority `1000` and logging enabled. The deny rule targets TCP port 80, while the allow rule permits TCP ports 22 and 80.*
+**Figure 2 — Google Cloud VPC firewall list showing `allow-http-ssh` and `deny-http`, both targeting the `http-server` network tag with priority `1000` and logging enabled. The deny rule targets TCP port 80, while the allow rule permits TCP ports 22 and 80.**
 
 Both rules targeted instances carrying the `http-server` network tag.
 
@@ -249,12 +263,13 @@ The screenshot displayed the source-filter category but did not independently re
 
 The `allow-http-ssh` rule was configured to permit incoming connections on:
 
-- TCP port `22` — SSH
-- TCP port `80` — HTTP
+\- TCP port `22` — SSH
+
+\- TCP port `80` — HTTP
 
 The `deny-http` rule was configured to deny incoming connections on:
 
-- TCP port `80` — HTTP
+\- TCP port `80` — HTTP
 
 Because both rules used the same target network tag and priority, their conditions overlapped for HTTP traffic matching both rules' source criteria.
 
@@ -279,7 +294,7 @@ The expected outcome remains subject to the complete effective firewall policy a
 
 #### Firewall Logging Configuration
 
-The firewall list displayed logging as **On** for both rules.
+The firewall list displayed logging as ****On**** for both rules.
 
 Firewall Rules Logging can provide records of connections matching logged rules, including information about the firewall action and connection attributes.
 
@@ -303,7 +318,7 @@ In production, administrative access and public-facing services should be scoped
 
 #### Analyst Assessment
 
-**Assessment: Overlapping HTTP allow and deny rules identified, with the deny action taking precedence at equal priority for matching traffic.**
+****Assessment: Overlapping HTTP allow and deny rules identified, with the deny action taking precedence at equal priority for matching traffic.****
 
 The screenshot showed two enabled ingress rules targeting the `http-server` network tag.
 
@@ -327,8 +342,9 @@ The objective was to determine whether HTTP connection attempts to the Cymbal Ba
 
 The previous configuration review identified two ingress rules targeting the `http-server` network tag:
 
-- `allow-http-ssh`, permitting TCP ports `22` and `80`.
-- `deny-http`, denying TCP port `80`.
+\- `allow-http-ssh`, permitting TCP ports `22` and `80`.
+
+\- `deny-http`, denying TCP port `80`.
 
 Both rules used priority `1000`, making the deny action relevant when traffic matched both rules.
 
@@ -339,8 +355,11 @@ I opened Cloud Logging → Logs Explorer and queried the VPC firewall logs.
 The preserved query used the following log source filters:
 
 ```text
+
 resource.type="gce_subnetwork"
+
 log_name="projects/qwiklabs-gcp-03-e4eca9aa31dd/logs/compute.googleapis.com%2Ffirewall"
+
 ```
 
 An additional source-IP condition was visible, but its value was redacted in the screenshot.
@@ -374,7 +393,7 @@ The selected log event contained the following fields:
 
 ![Denied HTTP connection in firewall logs](evidence/03-denied-http-firewall-log.png)
 
-*Figure 3 — Firewall Rules Logging showing a TCP connection to `10.1.3.2:80` with disposition `DENIED`, associated with the `web-server` instance.*
+**Figure 3 — Firewall Rules Logging showing a TCP connection to `10.1.3.2:80` with disposition `DENIED`, associated with the `web-server` instance.**
 
 The destination port identified the attempted connection as TCP traffic directed toward the web server's HTTP service.
 
@@ -400,7 +419,7 @@ The preserved fields identified the following rule attributes:
 
 ![Firewall rule attribution for denied HTTP connection](evidence/04-deny-http-firewall-rule-attribution.png)
 
-*Figure 4 — Expanded firewall log details identifying the `deny-http` ingress rule at priority `1000` as responsible for the selected denied HTTP connection.*
+**Figure 4 — Expanded firewall log details identifying the `deny-http` ingress rule at priority `1000` as responsible for the selected denied HTTP connection.**
 
 The `rule_details.reference` field identified `deny-http` in the `vpc-net` network.
 
@@ -442,7 +461,7 @@ However, log events represent observed connections and should not be interpreted
 
 #### Analyst Assessment
 
-**Assessment: HTTP traffic to the `web-server` instance was denied by the `deny-http` firewall rule.**
+****Assessment: HTTP traffic to the `web-server` instance was denied by the `deny-http` firewall rule.****
 
 The selected firewall log recorded a TCP connection to destination IP `10.1.3.2` on port `80` with disposition `DENIED`.
 
@@ -482,7 +501,7 @@ The query returned firewall logging events with different recorded dispositions.
 
 #### Observed Firewall Events
 
-The preserved screenshot displayed two expanded firewall log entries.
+The preserved screenshot displayed two firewall log entries with their disposition fields expanded; connection and rule details remained collapsed.
 
 | Evidence Attribute | Earlier Event | Later Event |
 | --- | --- | --- |
@@ -495,20 +514,24 @@ The preserved screenshot displayed two expanded firewall log entries.
 
 ![Before-and-after HTTP firewall traffic comparison](evidence/05-http-allowed-denied-traffic-comparison.png)
 
-*Figure 5 — Independent Cloud Logging analysis showing an earlier firewall event with disposition `ALLOWED` at 22:22:32.334 and a later event with disposition `DENIED` at 22:32:07.569. Both entries are from September 21, 2026. Connection and rule details remain collapsed.*
+**Figure 5 — Independent Cloud Logging analysis showing an earlier firewall event with disposition `ALLOWED` at 22:22:32.334 and a later event with disposition `DENIED` at 22:32:07.569. Both entries are from September 21, 2026. Connection and rule details remain collapsed.**
 
 Both records included a `jsonPayload.disposition` field.
 
 The earlier event displayed:
 
 ```text
+
 disposition: "ALLOWED"
+
 ```
 
 The later event displayed:
 
 ```text
+
 disposition: "DENIED"
+
 ```
 
 The screenshot therefore established that the investigation query returned an earlier permitted connection and a later denied connection.
@@ -555,7 +578,7 @@ However, meaningful before-and-after validation requires attention to event time
 
 #### Analyst Assessment
 
-**Assessment: Independent firewall-log comparison identified an earlier `ALLOWED` event followed by a later `DENIED` event during the HTTP restriction exercise.**
+****Assessment: Independent firewall-log comparison identified an earlier `ALLOWED` event followed by a later `DENIED` event during the HTTP restriction exercise.****
 
 The preserved screenshot showed two firewall logging records with different dispositions and distinct timestamps.
 
@@ -587,7 +610,7 @@ The strongest evidence came from the firewall log that explicitly attributed a d
 
 ### Security Lessons
 
-**1. Network flow evidence and firewall enforcement evidence are different.**
+****1. Network flow evidence and firewall enforcement evidence are different.****
 
 The initial VPC Flow Log established that TCP traffic was observed for the web server.
 
@@ -597,7 +620,7 @@ The later Firewall Rules Logging records provided the information needed to iden
 
 This distinction is important when interpreting network security telemetry.
 
-**2. Firewall rules must be evaluated together.**
+****2. Firewall rules must be evaluated together.****
 
 The HTTP allow and deny rules shared priority `1000` and targeted the same network tag.
 
@@ -605,13 +628,13 @@ For traffic matching both rules, the deny action took precedence.
 
 Reviewing a single allow rule without considering overlapping restrictions could lead to an incorrect conclusion about the effective network-access policy.
 
-**3. Logging supports evidence-based validation.**
+****3. Logging supports evidence-based validation.****
 
 The denied-connection log included destination information, connection disposition, and firewall rule attribution.
 
 These fields supported a direct relationship between the configured `deny-http` rule and a recorded HTTP denial.
 
-**4. Independent queries can reveal additional context.**
+****4. Independent queries can reveal additional context.****
 
 Filtering exclusively for denied events would have omitted the earlier allowed event from the independent comparison.
 
@@ -638,18 +661,29 @@ This provided useful chronological context, although the preserved screenshot di
 
 A cloud security analyst validating a similar firewall change in production should:
 
-1. Confirm the intended exposure of the web service and the business justification for HTTP access.
-2. Review all applicable VPC firewall rules and hierarchical firewall policies.
-3. Verify priorities, directions, source criteria, target criteria, and applicable deny-versus-allow behavior.
-4. Restrict SSH access to authorized administrative sources or approved access mechanisms.
-5. Ensure that relevant firewall rules have appropriate logging enabled.
-6. Generate authorized connection tests from representative sources.
-7. Confirm allowed traffic is permitted where required.
-8. Confirm denied traffic is blocked where intended.
-9. Review Firewall Rules Logging for matching connection dispositions.
-10. Inspect rule attribution to identify which firewall control evaluated the traffic.
-11. Validate that security changes do not unintentionally interrupt legitimate application traffic.
-12. Preserve logs, screenshots, configuration changes, and validation results for incident or change-control documentation.
+1\. Confirm the intended exposure of the web service and the business justification for HTTP access.
+
+2\. Review all applicable VPC firewall rules and hierarchical firewall policies.
+
+3\. Verify priorities, directions, source criteria, target criteria, and applicable deny-versus-allow behavior.
+
+4\. Restrict SSH access to authorized administrative sources or approved access mechanisms.
+
+5\. Ensure that relevant firewall rules have appropriate logging enabled.
+
+6\. Generate authorized connection tests from representative sources.
+
+7\. Confirm allowed traffic is permitted where required.
+
+8\. Confirm denied traffic is blocked where intended.
+
+9\. Review Firewall Rules Logging for matching connection dispositions.
+
+10\. Inspect rule attribution to identify which firewall control evaluated the traffic.
+
+11\. Validate that security changes do not unintentionally interrupt legitimate application traffic.
+
+12\. Preserve logs, screenshots, configuration changes, and validation results for incident or change-control documentation.
 
 These recommendations describe production validation practices rather than additional steps independently demonstrated by the screenshots.
 
@@ -659,42 +693,63 @@ The investigation was conducted within an authorized, temporary Google Cloud tra
 
 The following limitations apply:
 
-1. **Training environment:** The scenario was a controlled cloud networking exercise rather than an investigation of confirmed malicious activity.
-2. **Initial VPC Flow Log:** Screenshot 1 documented a TCP flow to port `80` but did not contain an explicit firewall disposition.
-3. **Source IP addresses:** The test source IP values were redacted in the preserved screenshots and were not reconstructed.
-4. **Firewall source ranges:** The lab instructions specified `0.0.0.0/0` for both rules, but Screenshot 2 did not independently display the complete source-range values.
-5. **Rule evaluation:** The analysis of deny precedence assumes traffic matches both relevant firewall rules. Other applicable controls were not comprehensively assessed.
-6. **Connection denial:** The selected firewall log established that a particular HTTP connection was denied, not that every possible HTTP path was blocked.
-7. **Rule details:** The expanded `rule_details` object identified the enforcing rule, action, priority, and direction. Several nested configuration fields were not expanded.
-8. **Independent comparison:** Screenshot 5 showed earlier `ALLOWED` and later `DENIED` events, but their connection attributes and individual rule details remained collapsed.
-9. **Application response:** No complete HTTP application-response capture was preserved to independently establish the web server's response during each test stage.
-10. **Effective network policy:** The screenshots did not provide a complete assessment of all firewall policies, source restrictions, or network paths.
+1\. ****Training environment:**** The scenario was a controlled cloud networking exercise rather than an investigation of confirmed malicious activity.
+
+2\. ****Initial VPC Flow Log:**** Screenshot 1 documented a TCP flow to port `80` but did not contain an explicit firewall disposition.
+
+3\. ****Source IP addresses:**** The test source IP values were redacted in the preserved screenshots and were not reconstructed.
+
+4\. ****Firewall source ranges:**** The lab instructions specified `0.0.0.0/0` for both rules, but Screenshot 2 did not independently display the complete source-range values.
+
+5\. ****Rule evaluation:**** The analysis of deny precedence assumes traffic matches both relevant firewall rules. Other applicable controls were not comprehensively assessed.
+
+6\. ****Connection denial:**** The selected firewall log established that a particular HTTP connection was denied, not that every possible HTTP path was blocked.
+
+7\. ****Rule details:**** The expanded `rule_details` object identified the enforcing rule, action, priority, and direction. Several nested configuration fields were not expanded.
+
+8\. ****Independent comparison:**** Screenshot 5 showed earlier `ALLOWED` and later `DENIED` events, but their connection attributes and individual rule details remained collapsed.
+
+9\. ****Application response:**** No complete HTTP application-response capture was preserved to independently establish the web server's response during each test stage.
+
+10\. ****Effective network policy:**** The screenshots did not provide a complete assessment of all firewall policies, source restrictions, or network paths.
 
 ## Skills Demonstrated
 
 ### Cloud Network Security
 
-- Reviewed Google Cloud VPC firewall rules.
-- Examined ingress direction, actions, priorities, and destination ports.
-- Interpreted overlapping allow and deny rules.
-- Evaluated firewall rule target tags.
-- Analyzed expected rule evaluation behavior for HTTP and SSH.
+\- Reviewed Google Cloud VPC firewall rules.
+
+\- Examined ingress direction, actions, priorities, and destination ports.
+
+\- Interpreted overlapping allow and deny rules.
+
+\- Evaluated firewall rule target tags.
+
+\- Analyzed expected rule evaluation behavior for HTTP and SSH.
 
 ### Security Monitoring and Log Analysis
 
-- Used Google Cloud Logs Explorer to investigate network activity.
-- Examined VPC Flow Logs for TCP connection metadata.
-- Analyzed firewall rule logs containing `ALLOWED` and `DENIED` dispositions.
-- Identified the destination instance, protocol, and destination port associated with denied traffic.
-- Attributed a recorded connection denial to a specific VPC firewall rule.
+\- Used Google Cloud Logs Explorer to investigate network activity.
+
+\- Examined VPC Flow Logs for TCP connection metadata.
+
+\- Analyzed firewall rule logs containing `ALLOWED` and `DENIED` dispositions.
+
+\- Identified the destination instance, protocol, and destination port associated with denied traffic.
+
+\- Attributed a recorded connection denial to a specific VPC firewall rule.
 
 ### Security Control Validation
 
-- Compared intended network restrictions with observed enforcement events.
-- Distinguished traffic observations from explicit firewall dispositions.
-- Conducted an independent before-and-after traffic analysis.
-- Removed restrictive disposition filtering to identify additional security context.
-- Documented evidence-backed findings and verification limitations.
+\- Compared intended network restrictions with observed enforcement events.
+
+\- Distinguished traffic observations from explicit firewall dispositions.
+
+\- Conducted an independent before-and-after traffic analysis.
+
+\- Removed restrictive disposition filtering to identify additional security context.
+
+\- Documented evidence-backed findings and verification limitations.
 
 ## Conclusion
 
