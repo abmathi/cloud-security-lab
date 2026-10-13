@@ -445,3 +445,108 @@ The exercise provided a snapshot-based VM replacement procedure incorporating ne
 The preserved screenshot confirms the existence and running state of the new instance.
 
 Additional configuration evidence and security validation would be required to confirm the snapshot origin, Secure Boot status, network exposure, service account privileges, and final disposition of the original VM.
+
+### Finding 5 — Cloud Storage Public Access Remediation
+
+#### Investigation Context
+
+The simulated Cymbal Retail incident identified public Cloud Storage access as a potential data exposure concern.
+
+The objective was to assess the affected bucket's original permissions, apply stronger access controls, and verify the resulting configuration.
+
+Unlike several earlier investigation stages, this finding includes preserved screenshots of both the initial and post-remediation states.
+
+#### Initial Bucket Security Configuration
+
+I opened Cloud Storage and reviewed the permissions for the training bucket:
+
+`qwiklabs-gcp-03-b2b235320532_bucket`
+
+The initial screenshot displayed the following configuration:
+
+| Security Setting | Initial State |
+| --- | --- |
+| Public access | Access granted to public principals |
+| Public Access Prevention | Not enforced in the displayed configuration |
+| Access control mode | Fine-grained |
+| Object-level ACLs | Enabled |
+
+![Cloud Storage public access before remediation](evidence/06-cloud-storage-public-access-before.png)
+
+*Figure 6 — Initial Cloud Storage bucket permissions showing public access granted to public principals and fine-grained object-level ACLs enabled.*
+
+The bucket's public access status indicated that public principals had been granted access.
+
+Fine-grained access control also allowed object-level ACLs, introducing another mechanism for managing access outside uniform bucket-level IAM.
+
+The screenshot did not identify every public principal or show the effective permissions for individual objects.
+
+Therefore, the evidence established a publicly accessible configuration but did not independently determine which files were exposed or accessed.
+
+#### Storage Remediation Procedure
+
+Following the lab instructions, I updated the Cloud Storage bucket's security configuration.
+
+The procedure involved:
+
+1. Opening the affected Cloud Storage bucket.
+2. Reviewing the existing public access and access-control settings.
+3. Enabling Public Access Prevention.
+4. Switching the bucket to uniform bucket-level access.
+5. Saving the configuration changes.
+6. Returning to the Permissions view to verify the resulting settings.
+
+Public Access Prevention is intended to prevent public access grants to the bucket and its objects.
+
+Uniform bucket-level access disables object-level ACLs and centralizes authorization through IAM policies.
+
+Together, these controls simplify access management and reduce the risk of unintended public exposure.
+
+#### Post-Remediation Verification
+
+The second screenshot showed the same bucket with updated security settings.
+
+| Security Setting | Before Remediation | After Remediation |
+| --- | --- | --- |
+| Public access | Access granted to public principals | Not public |
+| Public Access Prevention | Not enforced | Enforced |
+| Access control mode | Fine-grained | Uniform |
+| Object-level ACLs | Enabled | Disabled |
+
+![Cloud Storage public access after remediation](evidence/07-cloud-storage-public-access-after.png)
+
+*Figure 7 — Post-remediation permissions showing the bucket as Not public, Public Access Prevention enabled, and uniform bucket-level access active.*
+
+The updated Permissions view displayed **Not public**.
+
+The presence of the **Remove Public Access Prevention** option indicated that Public Access Prevention was enabled.
+
+The Access control panel also displayed **Uniform: No object-level ACLs enabled**.
+
+These observations provide direct visual evidence that the bucket's public access and access-control configuration changed during the exercise.
+
+#### Security Relevance
+
+Public Cloud Storage access can result in unintended disclosure when sensitive information is stored in publicly accessible buckets or objects.
+
+Enforcing Public Access Prevention reduces exposure through public IAM and ACL grants.
+
+Uniform bucket-level access simplifies permissions management by eliminating object-level ACLs.
+
+In a production incident, securing the bucket would be one part of the response.
+
+An analyst would also investigate Cloud Audit Logs and available storage-access telemetry, evaluate which objects were exposed, determine whether access occurred, and assess whether credentials or IAM permissions require further remediation.
+
+The screenshots in this exercise do not establish that data was exfiltrated or that an unauthorized party accessed the bucket.
+
+#### Analyst Assessment
+
+**Assessment: Cloud Storage bucket public access controls successfully hardened in the visible post-remediation configuration.**
+
+The initial screenshot showed public access and fine-grained object-level ACLs.
+
+The post-remediation screenshot showed a nonpublic bucket with Public Access Prevention enforced and uniform bucket-level access enabled.
+
+This demonstrated a directly verifiable reduction in public exposure for the affected storage bucket.
+
+The next investigation phase examines restrictions applied to administrative network access.
