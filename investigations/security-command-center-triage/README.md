@@ -17,23 +17,14 @@ The investigation demonstrates security finding triage, credential-risk remediat
 The investigation was conducted in a temporary Google Cloud lab project using controlled service account activity.
 
 | Component | Investigation Purpose |
-
 | --- | --- |
-
 | Security Command Center | Identify and investigate service account security findings |
-
 | IAM | Review service account access and permissions |
-
 | Service Accounts | Examine the affected test identity |
-
 | User-managed JSON key | Reproduce the credential-management finding |
-
 | Cloud Shell | Activate and verify the test service account |
-
 | SCC finding details | Assess severity, affected resources, and recommended actions |
-
 | Service account Keys | Verify removal of the user-managed key |
-
 | Principals with access | Independently examine remaining Owner-level permissions |
 
 ### Investigation Objectives
@@ -65,21 +56,13 @@ The evidence was collected during a guided Google Cloud security exercise and an
 ### Investigation Methodology
 
 | Phase | Analyst Activity |
-
 | --- | --- |
-
 | Preparation | Establish a test service account in an authorized cloud project |
-
 | Finding generation | Create and activate a user-managed service account key |
-
 | Triage | Identify and inspect the resulting SCC finding |
-
 | Remediation | Delete the service account key |
-
 | Validation | Inspect the Keys tab after remediation |
-
 | Independent assessment | Examine project-level permissions associated with the service account |
-
 | Reporting | Document observed evidence, remaining risks, and recommended controls |
 
 ### Evidence Standards
@@ -125,13 +108,9 @@ I opened Security Command Center, navigated to the Findings interface, and filte
 The interface displayed three matching findings under the selected seven-day filter, including one row dated September 14, 2026. The displayed timestamps should not be interpreted as proof that all three findings were first created within an identical seven-day interval.
 
 | Finding | Category | Severity | Event Date |
-
 | --- | --- | --- | --- |
-
 | 1 | User managed service account key | Medium | September 21, 2026 |
-
 | 2 | User managed service account key | Medium | September 21, 2026 |
-
 | 3 | User managed service account key | Medium | September 14, 2026 |
 
 ![Security Command Center service account key findings](evidence/01-scc-service-account-findings.png)
@@ -178,25 +157,15 @@ The objective was to determine what Security Command Center detected, identify t
 The Security Command Center summary identified the following information:
 
 | Field | Observed Value |
-
 | --- | --- |
-
 | Finding category | `User managed service account key` |
-
 | Finding state | Active |
-
 | Severity | Medium |
-
 | Event time | September 21, 2026, 3:58:51 PM GMT-7 |
-
 | Creation time | September 21, 2026, 3:58:52 PM GMT-7 |
-
 | Resource type | `google.iam.ServiceAccountKey` |
-
 | Affected service account | `test-account` |
-
 | Cloud provider | Google Cloud |
-
 | Security contacts | None listed |
 
 ![Security Command Center user-managed service account key finding](evidence/02-scc-finding-details.png)
@@ -291,19 +260,12 @@ This does not automatically delete copies of the downloaded JSON file or change 
 After completing the deletion procedure, I reviewed the service account's Keys tab.
 
 | Verification Item | Observed Result |
-
 | --- | --- |
-
 | Affected identity | `test-account` |
-
 | Console location | Service Accounts → Keys |
-
 | Displayed key records | No rows to display |
-
 | Remaining user-managed keys | None visible in the captured inventory |
-
 | IAM role changes | Not demonstrated by this screenshot |
-
 | SCC finding resolution | Not independently demonstrated by this screenshot |
 
 ![Service account key inventory after remediation](evidence/03-service-account-key-remediation.png)
@@ -407,11 +369,8 @@ A production review would need to establish the service account's legitimate ope
 The investigation identified two distinct security concerns:
 
 | Security Concern | Observed State | Assessment |
-
 | --- | --- | --- |
-
 | User-managed JSON authentication key | No keys visible after deletion | Key inventory remediation verified |
-
 | Project-level Owner role | Owner grant remained visible | Excessive privilege concern remained unremediated |
 
 Deleting the user-managed key prevents that specific key from being used for authentication.
@@ -457,19 +416,12 @@ This investigation demonstrated why service account security requires evaluating
 The Security Command Center finding identified a user-managed service account key, while the independent IAM review identified a separate excessive-permissions concern.
 
 | Security Area | Observation | Security Implication |
-
 | --- | --- | --- |
-
 | Security finding triage | SCC displayed three medium-severity findings for user-managed service account keys | Configuration findings provide starting points for investigating credential-management risks |
-
 | Credential exposure risk | The selected finding identified a user-managed JSON authentication key | Exportable private keys can become security risks if copied, exposed, or inadequately protected |
-
 | Credential remediation | The service account's Keys tab displayed no remaining key records | Removing unnecessary credentials reduces authentication exposure associated with those keys |
-
 | IAM privilege review | The test service account retained a project-level Owner role | Broad permissions increase potential impact if the identity is compromised or misused |
-
 | Remediation completeness | Key removal did not change the observed Owner grant | Authentication and authorization concerns require separate remediation |
-
 | Finding interpretation | The risky configuration was intentionally created for testing | Benign activity context does not automatically invalidate an accurate security finding |
 
 ### Credential Risk Versus Privilege Risk
@@ -507,19 +459,12 @@ The following recommendations distinguish the remediation completed during the l
 | Priority | Recommendation | Status in This Investigation |
 
 | --- | --- | --- |
-
 | High | Delete the unnecessary user-managed authentication key | Completed; no keys visible in post-remediation inventory |
-
 | High | Review and reduce the service account's project-level Owner permissions | Recommended; not performed |
-
 | High | Identify any workloads dependent on the service account before modifying access | Recommended for production |
-
 | Medium | Prefer keyless or short-lived workload authentication where supported | Recommended |
-
 | Medium | Restrict unnecessary creation of user-managed service account keys using organization policies | Recommended |
-
 | Medium | Monitor privileged IAM changes and service account key creation | Recommended |
-
 | Medium | Recheck SCC finding status after remediation | Not independently verified in the preserved evidence |
 
 ### Recommended Production Remediation Sequence
@@ -625,15 +570,10 @@ These skills apply directly to cloud security operations, identity and access ma
 ## Evidence Index
 
 | Figure | Evidence File | Description |
-
 | --- | --- | --- |
-
 | 1 | `01-scc-service-account-findings.png` | SCC findings list showing three medium-severity user-managed service account key findings |
-
 | 2 | `02-scc-finding-details.png` | Active finding details for the affected test service account |
-
 | 3 | `03-service-account-key-remediation.png` | Post-remediation Keys tab showing no remaining key records |
-
 | 4 | `04-service-account-owner-privileges.png` | Independent IAM review showing the remaining project-level Owner assignment |
 
 All four evidence screenshots are located in the accompanying [`evidence/`](evidence/) directory.
