@@ -256,3 +256,104 @@ The source properties identified an expected training-domain user as the recipie
 The grant was consistent with the lab's authorized provisioning process, despite matching the Event Threat Detection anomalous-grant pattern.
 
 The next phase examines the later finding involving an external account, where the recipient's identity and authorization context differ.
+
+### Finding 3 — Suspicious External IAM Grant Analysis
+
+#### Investigation Context
+
+The third phase examined the later high-severity IAM anomalous grant finding.
+
+Unlike the earlier event associated with automated project provisioning, this finding involved an external Gmail account being invited to receive project-level Owner access.
+
+The objective was to identify the acting principal, recipient identity, administrative method, and detection rationale before assessing the potential security impact.
+
+#### Finding Summary Analysis
+
+I opened the later `Persistence: IAM anomalous grant` finding and examined its summary.
+
+| Field | Observed Value |
+| --- | --- |
+| Finding category | `Persistence: IAM anomalous grant` |
+| Finding state | Active |
+| Severity | High |
+| Event time | September 21, 2026, 4:26:52 PM GMT-7 |
+| Administrative method | `InsertProjectOwnershipInvite` |
+| Calling principal | Qwiklabs student training account |
+| Caller IP | `98.177.14.130` |
+| Service | `cloudresourcemanager.googleapis.com` |
+| Affected resource | Google Cloud training project |
+| Finding class | Threat |
+
+![External project Owner invitation finding](evidence/04-external-owner-invitation-summary.png)
+
+*Figure 4 — Security Command Center finding identifying an external project ownership invitation through the `InsertProjectOwnershipInvite` method.*
+
+The finding description stated that an external member was invited as the project's Owner through the `InsertProjectOwnershipInvite` API.
+
+The recorded calling principal was a Qwiklabs student account rather than the provisioning service account associated with the earlier finding.
+
+This difference warranted additional investigation into the intended recipient and authorization context.
+
+#### Source Properties Investigation
+
+I examined the finding's Source properties tab and expanded the `sensitiveRoleGrant` fields.
+
+| Property | Observed Value |
+| --- | --- |
+| Detection rule | `iam_anomalous_grant` |
+| Detection subrule | `external_member_invited_to_policy` |
+| Detection priority | High |
+| Administrative principal | Qwiklabs student training account |
+| Invited member | `user:bad.actor.demo@gmail.com` |
+| Sensitive role context | Project Owner invitation |
+| Detection technique | Persistence |
+
+![External IAM grant source properties](evidence/05-external-owner-invitation-source-properties.png)
+
+*Figure 5 — Event Threat Detection source properties showing the `external_member_invited_to_policy` subrule and identifying the external Gmail account as the invitation recipient.*
+
+The source properties identified the external Gmail account as the invited member.
+
+The administrative principal and receiving identity were distinct: the student training account initiated the operation, while the external Gmail identity was the invitation recipient.
+
+This distinction is important for attributing IAM changes and investigating how external access was introduced.
+
+#### Comparison with Expected Provisioning
+
+The two high-severity Event Threat Detection findings involved different administrative contexts.
+
+| Investigation Attribute | Expected Provisioning | External Invitation |
+| --- | --- | --- |
+| Acting identity | Provisioning service account | Student training account |
+| Administrative method | `SetIamPolicy` | `InsertProjectOwnershipInvite` |
+| Receiving identity | Qwiklabs training-domain user | External Gmail account |
+| Operational context | Automated project provisioning | Deliberately introduced test scenario |
+| Triage assessment | Expected in documented lab context | Suspicious within the scenario |
+
+The comparison demonstrated why the same broad detection category can encompass both expected and suspicious activity.
+
+The investigation required examining the acting identity, receiving identity, administrative method, and known operational context rather than relying solely on alert severity.
+
+#### Security Relevance
+
+Inviting an external identity to receive the project-level Owner role is a security-sensitive administrative operation.
+
+If the access is granted and becomes effective, Owner privileges can provide broad control over cloud resources and project configuration.
+
+In an unauthorized scenario, such access could support persistence, privilege misuse, or other administrative activity.
+
+However, the observed event established an invitation operation, not independently verified acceptance, successful authentication, or subsequent use of Owner privileges.
+
+The activity was deliberately performed in an authorized training project.
+
+#### Analyst Assessment
+
+**Assessment: High-severity external project ownership invitation identified and classified as suspicious within the lab scenario.**
+
+Event Threat Detection identified an invitation to grant project ownership to an external Gmail identity.
+
+The source properties confirmed the invitation recipient and the recorded acting principal.
+
+The finding provided sufficient context to prioritize further audit-log review and access remediation.
+
+The next phase investigates the underlying Cloud Audit Log record to corroborate the reported IAM operation.
