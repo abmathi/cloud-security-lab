@@ -41,16 +41,25 @@ The preserved screenshots demonstrate selected backup configuration and VM recov
 
 ### Investigation Objectives
 
-1. Review the Backup and DR management environment.
-2. Create a backup template with an appropriate snapshot schedule and retention period.
-3. Review the appliance's required service account permissions.
-4. Discover and enroll `lab-vm` using the backup template.
-5. Examine the protected workload onboarding result.
-6. Restore a new Compute Engine instance within the original project.
-7. Verify that the original and recovered VMs exist and are running.
-8. Grant the required backup and recovery permissions in an alternate project.
-9. Restore the workload into the alternate project.
-10. Verify the resulting cross-project VM deployment and document recovery limitations.
+1\. Review the Backup and DR management environment.
+
+2\. Create a backup template with an appropriate snapshot schedule and retention period.
+
+3\. Review the appliance's required service account permissions.
+
+4\. Discover and enroll `lab-vm` using the backup template.
+
+5\. Examine the protected workload onboarding result.
+
+6\. Restore a new Compute Engine instance within the original project.
+
+7\. Verify that the original and recovered VMs exist and are running.
+
+8\. Grant the required backup and recovery permissions in an alternate project.
+
+9\. Restore the workload into the alternate project.
+
+10\. Verify the resulting cross-project VM deployment and document recovery limitations.
 
 ## Evidence Sources and Methodology
 
@@ -90,10 +99,13 @@ The report will distinguish between procedures prescribed by the lab and results
 
 The report will document four findings:
 
-1. Backup Plan and Snapshot Policy Configuration
-2. Compute Engine Workload Onboarding and Backup Protection
-3. Same-Project Compute Engine Recovery Verification
-4. Cross-Project Compute Engine Disaster Recovery
+1\. Backup Plan and Snapshot Policy Configuration
+
+2\. Compute Engine Workload Onboarding and Backup Protection
+
+3\. Same-Project Compute Engine Recovery Verification
+
+4\. Cross-Project Compute Engine Disaster Recovery
 
 The final sections will summarize security implications, recovery limitations, recommendations, skills demonstrated, and supporting evidence.
 
@@ -142,7 +154,7 @@ The preserved screenshot showed the following settings:
 
 ![Google Cloud Backup and DR snapshot policy](evidence/01-backup-template-snapshot-policy.png)
 
-*Figure 1 — Google Cloud Backup and DR template `vm-backup`, showing the `Daily VM snapshot` policy configured for continuous scheduling every two hours, with a two-day expiration setting.*
+**Figure 1 — Google Cloud Backup and DR template `vm-backup`, showing the `Daily VM snapshot` policy configured for continuous scheduling every two hours, with a two-day expiration setting.**
 
 The screenshot showed one snapshot policy associated with the backup template.
 
@@ -157,7 +169,9 @@ The policy name, `Daily VM snapshot`, could suggest a once-per-day backup schedu
 However, the actual configuration specified:
 
 - Scheduling: `Continuous`
+
 - Repeat value: `Every 2 hours`
+
 - Expire after: `2 days`
 
 Therefore, the intended backup interval was two hours rather than twenty-four hours.
@@ -185,7 +199,7 @@ RTO depends on the time needed to restore systems and resume required services.
 
 The preserved screenshot displayed the configured snapshot policy within the backup template editor.
 
-It showed a **Save Template** button, indicating that the interface was displaying the configuration prior to, or during, the template-saving workflow.
+It showed a ****Save Template**** button, indicating that the interface was displaying the configuration prior to, or during, the template-saving workflow.
 
 The image did not independently establish that the template had already been saved or that the scheduled backups had executed successfully.
 
@@ -205,7 +219,7 @@ Retention policies should also reflect business, legal, and security requirement
 
 #### Analyst Assessment
 
-**Assessment: Continuous snapshot backup policy configured with a two-hour repeat interval and two-day expiration setting.**
+****Assessment: Continuous snapshot backup policy configured with a two-hour repeat interval and two-day expiration setting.****
 
 The preserved evidence showed a backup template named `vm-backup` containing the `Daily VM snapshot` policy.
 
@@ -231,7 +245,7 @@ The supplied lab environment included a preconfigured backup/recovery appliance.
 
 Before onboarding the workload, the lab procedure instructed me to review the appliance's associated service account and confirm that the necessary Backup and DR permissions were available.
 
-The procedure specifically referenced the **Backup DR Appliance Service Account** and its assigned **Backup and DR Cloud Storage Operator** role.
+The procedure specifically referenced the ****Backup DR Appliance Service Account**** and its assigned ****Backup and DR Cloud Storage Operator**** role.
 
 These permissions supported the authorized backup and restoration workflow.
 
@@ -243,15 +257,23 @@ Therefore, the service-account review is documented as part of the prescribed pr
 
 Using the Backup and DR management console, I followed the guided onboarding process:
 
-1. Navigated to **Back Up & Recover → Back Up**.
-2. Selected the Backup DR Appliance Service Account credential.
-3. Selected the appropriate project and Compute Engine zone.
-4. Discovered the available Compute Engine instances.
-5. Selected the source virtual machine, `lab-vm`.
-6. Chose **Apply a backup template** as the onboarding action.
-7. Selected the previously configured `vm-backup` template.
-8. Completed the onboarding wizard.
-9. Reviewed the displayed completion status.
+1\. Navigated to ****Back Up & Recover → Back Up****.
+
+2\. Selected the Backup DR Appliance Service Account credential.
+
+3\. Selected the appropriate project and Compute Engine zone.
+
+4\. Discovered the available Compute Engine instances.
+
+5\. Selected the source virtual machine, `lab-vm`.
+
+6\. Chose ****Apply a backup template**** as the onboarding action.
+
+7\. Selected the previously configured `vm-backup` template.
+
+8\. Completed the onboarding wizard.
+
+9\. Reviewed the displayed completion status.
 
 The onboarding workflow was intended to associate the backup template with the source VM.
 
@@ -263,7 +285,7 @@ However, the preserved screenshot did not show an individual backup job or a com
 
 The final screen of the wizard displayed:
 
-**Onboarding finished successfully!**
+****Onboarding finished successfully!****
 
 The following information was visible:
 
@@ -282,7 +304,7 @@ The following information was visible:
 
 ![Successful Compute Engine backup onboarding](evidence/02-compute-engine-backup-onboarding-success.png)
 
-*Figure 2 — Google Cloud Backup and DR onboarding completion page showing `lab-vm`, the selected Apply a backup template action, the backup appliance, and a successful status indicator.*
+**Figure 2 — Google Cloud Backup and DR onboarding completion page showing `lab-vm`, the selected Apply a backup template action, the backup appliance, and a successful status indicator.**
 
 The green status indicator established that the onboarding operation completed successfully.
 
@@ -296,7 +318,7 @@ The evidence therefore supports successful workload onboarding rather than indep
 
 The lab instructions directed reviewing backup activity through:
 
-**Monitor → Jobs**
+****Monitor → Jobs****
 
 This view can provide information about backup job execution and completion status.
 
@@ -307,9 +329,13 @@ The preserved screenshot, however, showed only the onboarding completion page.
 It did not establish:
 
 - The exact time a backup job started or completed.
+
 - Whether an individual backup operation succeeded.
+
 - The size or integrity of the resulting backup image.
+
 - Whether subsequent scheduled backups executed successfully.
+
 - The age of the most recent recoverable image.
 
 These details would require additional backup-job records or recovery-image evidence.
@@ -330,11 +356,11 @@ The distinction between successful onboarding and verified recoverability is imp
 
 #### Analyst Assessment
 
-**Assessment: Compute Engine instance `lab-vm` successfully onboarded into the Google Cloud Backup and DR workflow.**
+****Assessment: Compute Engine instance `lab-vm` successfully onboarded into the Google Cloud Backup and DR workflow.****
 
 The screenshot displayed a successful onboarding message and a green status indicator for `lab-vm`.
 
-The workflow showed the action **Apply a backup template**, associated with the backup appliance `qwiklabs-appliances-yn9a`.
+The workflow showed the action ****Apply a backup template****, associated with the backup appliance `qwiklabs-appliances-yn9a`.
 
 The lab instructions identified `vm-backup` as the intended template, but the screenshot did not independently display its name or prove that a backup job had completed.
 
@@ -358,18 +384,29 @@ Following the lab instructions, I used the Backup and DR management console to b
 
 The prescribed procedure involved:
 
-1. Navigating to **Backup & Recover → Recover**.
-2. Selecting the protected Compute Engine instance `lab-vm`.
-3. Reviewing the available backup images.
-4. Selecting an available recovery image.
-5. Choosing **Mount**.
-6. Selecting **Mount as new GCE instance**.
-7. Configuring the destination region as `europe-west1`.
-8. Configuring the destination zone as `europe-west1-b`.
-9. Naming the recovered instance `lab-vm-recovered`.
-10. Submitting the mount operation.
-11. Reviewing the recovery operation through the Job Monitor.
-12. Opening the Compute Engine VM instances page to verify the restored resource.
+1\. Navigating to ****Backup & Recover → Recover****.
+
+2\. Selecting the protected Compute Engine instance `lab-vm`.
+
+3\. Reviewing the available backup images.
+
+4\. Selecting an available recovery image.
+
+5\. Choosing ****Mount****.
+
+6\. Selecting ****Mount as new GCE instance****.
+
+7\. Configuring the destination region as `europe-west1`.
+
+8\. Configuring the destination zone as `europe-west1-b`.
+
+9\. Naming the recovered instance `lab-vm-recovered`.
+
+10\. Submitting the mount operation.
+
+11\. Reviewing the recovery operation through the Job Monitor.
+
+12\. Opening the Compute Engine VM instances page to verify the restored resource.
 
 The lab instructions described an expected recovery workflow in which the mount operation creates a new Compute Engine instance using a previously generated backup image.
 
@@ -393,7 +430,7 @@ The preserved screenshot displayed the following resources:
 
 ![Original and recovered Compute Engine instances](evidence/03-same-project-vm-recovery-verification.png)
 
-*Figure 3 — Compute Engine VM instances in project `qwiklabs-gcp-04-19030dcfdf93`, showing the original `lab-vm`, recovered `lab-vm-recovered`, and backup appliance running in `europe-west1-b`. The recovered VM has a separate internal IP address.*
+**Figure 3 — Compute Engine VM instances in project `qwiklabs-gcp-04-19030dcfdf93`, showing the original `lab-vm`, recovered `lab-vm-recovered`, and backup appliance running in `europe-west1-b`. The recovered VM has a separate internal IP address.**
 
 Both instances displayed green running-status indicators.
 
@@ -428,12 +465,19 @@ A production disaster recovery validation would require more than confirming tha
 Additional validation could include:
 
 - Confirming the recovery-image identifier and backup timestamp.
+
 - Reviewing the recovery job's final completion status.
+
 - Verifying restored disks and filesystem consistency.
+
 - Confirming required applications and services start successfully.
+
 - Comparing critical restored data against expected recovery-state records.
+
 - Reviewing security configuration, IAM permissions, and network access.
+
 - Measuring the actual recovery duration and recovered data age.
+
 - Documenting whether established Recovery Time Objective (RTO) and Recovery Point Objective (RPO) requirements were met.
 
 These are recommended validation activities rather than additional checks established by the preserved screenshot.
@@ -456,7 +500,7 @@ The following investigation phase examines restoration to a separate Google Clou
 
 #### Analyst Assessment
 
-**Assessment: Same-project recovery instance `lab-vm-recovered` verified as running alongside the original `lab-vm`.**
+****Assessment: Same-project recovery instance `lab-vm-recovered` verified as running alongside the original `lab-vm`.****
 
 The Compute Engine instances page showed both VMs in project `qwiklabs-gcp-04-19030dcfdf93`, located in `europe-west1-b`, with separate internal IP addresses.
 
@@ -486,14 +530,21 @@ The prescribed recovery workflow required authorizing the backup/recovery applia
 
 The lab instructions directed the following steps:
 
-1. Opening **IAM & Admin → IAM** in the original project.
-2. Locating the **Backup DR Appliance Service Account**.
-3. Copying the appliance service account's email address.
-4. Switching to the destination project, `qwiklabs-gcp-01-db14fed18f62`.
-5. Granting the source project's appliance service account access to the destination project.
-6. Assigning the **Backup and DR Compute Engine Operator** role.
-7. Assigning the **Backup and DR Cloud Storage Operator** role.
-8. Saving the IAM configuration before initiating recovery.
+1\. Opening ****IAM & Admin → IAM**** in the original project.
+
+2\. Locating the ****Backup DR Appliance Service Account****.
+
+3\. Copying the appliance service account's email address.
+
+4\. Switching to the destination project, `qwiklabs-gcp-01-db14fed18f62`.
+
+5\. Granting the source project's appliance service account access to the destination project.
+
+6\. Assigning the ****Backup and DR Compute Engine Operator**** role.
+
+7\. Assigning the ****Backup and DR Cloud Storage Operator**** role.
+
+8\. Saving the IAM configuration before initiating recovery.
 
 These roles were specified by the lab to support the cross-project restoration workflow.
 
@@ -507,18 +558,29 @@ After preparing the destination project's permissions, the lab instructed me to 
 
 The prescribed workflow involved:
 
-1. Navigating to **Backup & Recover → Recover**.
-2. Selecting the protected source VM, `lab-vm`.
-3. Reviewing the available backup images.
-4. Selecting a recovery image.
-5. Choosing **Mount → Mount as new GCE instance**.
-6. Changing the destination project to `qwiklabs-gcp-01-db14fed18f62`.
-7. Setting the recovered instance name to `lab-vm-project2`.
-8. Selecting the destination region `us-east4`.
-9. Selecting the destination zone `us-east4-b`.
-10. Submitting the mount operation.
-11. Reviewing the recovery job through Job Monitor.
-12. Opening Compute Engine in the destination project to verify the recovered VM.
+1\. Navigating to ****Backup & Recover → Recover****.
+
+2\. Selecting the protected source VM, `lab-vm`.
+
+3\. Reviewing the available backup images.
+
+4\. Selecting a recovery image.
+
+5\. Choosing ****Mount → Mount as new GCE instance****.
+
+6\. Changing the destination project to `qwiklabs-gcp-01-db14fed18f62`.
+
+7\. Setting the recovered instance name to `lab-vm-project2`.
+
+8\. Selecting the destination region `us-east4`.
+
+9\. Selecting the destination zone `us-east4-b`.
+
+10\. Submitting the mount operation.
+
+11\. Reviewing the recovery job through Job Monitor.
+
+12\. Opening Compute Engine in the destination project to verify the recovered VM.
 
 The procedure was intended to deploy a new Compute Engine instance using an available backup image.
 
@@ -546,7 +608,7 @@ The preserved screenshot displayed the following configuration:
 
 ![Cross-project Compute Engine recovery](evidence/04-cross-project-vm-recovery-verification.png)
 
-*Figure 4 — Compute Engine VM instances page showing `lab-vm-project2` running in alternate project `qwiklabs-gcp-01-db14fed18f62`, in zone `us-east4-b`, with internal IP address `10.150.0.2`.*
+**Figure 4 — Compute Engine VM instances page showing `lab-vm-project2` running in alternate project `qwiklabs-gcp-01-db14fed18f62`, in zone `us-east4-b`, with internal IP address `10.150.0.2`.**
 
 The screenshot showed a green running-status indicator for `lab-vm-project2`.
 
@@ -587,31 +649,31 @@ Restoration into a different region can also reduce dependence on the original r
 
 However, cross-project restoration introduces additional security and operational considerations.
 
-**Identity and access management**
+****Identity and access management****
 
 The recovery service account must have the permissions required to operate in the destination project.
 
 Those permissions should be reviewed and limited to the authorized recovery workflow.
 
-**Recovery image security**
+****Recovery image security****
 
 Recovery images should be protected against unauthorized modification or deletion.
 
 A recovery image also requires integrity validation before it can be considered trustworthy following a security incident.
 
-**Network and application dependencies**
+****Network and application dependencies****
 
 A recovered VM may depend on external services, firewall rules, IAM configurations, DNS records, databases, and other infrastructure.
 
 A Running status does not establish that those dependencies have been restored.
 
-**Recovery objectives**
+****Recovery objectives****
 
 The screenshot does not provide the recovery-image timestamp, time required to restore the VM, or results of application testing.
 
 Consequently, achieved Recovery Point Objective (RPO) and Recovery Time Objective (RTO) values cannot be calculated from the preserved evidence.
 
-**Administrative isolation**
+****Administrative isolation****
 
 A separate Google Cloud project can provide an additional administrative boundary.
 
@@ -619,7 +681,7 @@ However, project separation alone does not establish that the recovery environme
 
 #### Analyst Assessment
 
-**Assessment: Cross-project recovery instance `lab-vm-project2` verified as running in an alternate Google Cloud project and region.**
+****Assessment: Cross-project recovery instance `lab-vm-project2` verified as running in an alternate Google Cloud project and region.****
 
 The Compute Engine screenshot showed the recovered instance in project `qwiklabs-gcp-01-db14fed18f62`, located in `us-east4-b`, with internal IP `10.150.0.2`.
 
@@ -649,7 +711,7 @@ The strongest recovery evidence came from the Compute Engine screenshots showing
 
 ### Disaster Recovery Lessons
 
-**1. Configured backup frequency is not a verified recovery objective.**
+****1. Configured backup frequency is not a verified recovery objective.****
 
 The backup template was configured to create snapshots every two hours.
 
@@ -657,7 +719,7 @@ However, a scheduled backup interval does not independently demonstrate an achie
 
 Successful backups, available recovery images, and actual recovered data age must be evaluated before an RPO can be confirmed.
 
-**2. Successful onboarding is different from successful backup execution.**
+****2. Successful onboarding is different from successful backup execution.****
 
 The Backup and DR console displayed a successful onboarding result for `lab-vm`.
 
@@ -665,7 +727,7 @@ This verified the workload registration process but did not independently show a
 
 Production backup monitoring should include job execution results, failure alerts, and recovery-image availability.
 
-**3. A running recovered VM is not the same as complete service recovery.**
+****3. A running recovered VM is not the same as complete service recovery.****
 
 Both the same-project and cross-project recovery screenshots showed running Compute Engine instances.
 
@@ -673,7 +735,7 @@ However, the evidence did not include application tests, restored data validatio
 
 A complete disaster recovery exercise should demonstrate that critical business services function correctly after restoration.
 
-**4. Cross-project recovery can improve recovery options.**
+****4. Cross-project recovery can improve recovery options.****
 
 The alternate-project recovery demonstrated a VM running in a different Google Cloud project and region.
 
@@ -703,22 +765,37 @@ However, project separation does not automatically ensure administrative isolati
 
 Before considering a production disaster recovery workflow fully validated, a cloud security analyst should:
 
-1. Verify that the backup template is saved and correctly assigned to the intended workloads.
-2. Review backup job execution results and investigate failures.
-3. Confirm that recovery images are created at the expected frequency.
-4. Validate retention settings against business, security, and compliance requirements.
-5. Review backup infrastructure permissions and administrative access.
-6. Protect backup images against unauthorized modification and deletion.
-7. Verify recovery-point integrity before restoration.
-8. Confirm that the selected restore image corresponds to the intended recovery point.
-9. Review the completed recovery job and measure its duration.
-10. Validate restored disks, filesystems, and critical application data.
-11. Test required applications, authentication, and dependent services.
-12. Verify network access controls and IAM configuration in the recovered environment.
-13. Evaluate whether the recovered data age meets the defined RPO.
-14. Evaluate whether service restoration time meets the defined RTO.
-15. Periodically test same-project and cross-project recovery procedures.
-16. Preserve recovery evidence and document unresolved risks.
+1\. Verify that the backup template is saved and correctly assigned to the intended workloads.
+
+2\. Review backup job execution results and investigate failures.
+
+3\. Confirm that recovery images are created at the expected frequency.
+
+4\. Validate retention settings against business, security, and compliance requirements.
+
+5\. Review backup infrastructure permissions and administrative access.
+
+6\. Protect backup images against unauthorized modification and deletion.
+
+7\. Verify recovery-point integrity before restoration.
+
+8\. Confirm that the selected restore image corresponds to the intended recovery point.
+
+9\. Review the completed recovery job and measure its duration.
+
+10\. Validate restored disks, filesystems, and critical application data.
+
+11\. Test required applications, authentication, and dependent services.
+
+12\. Verify network access controls and IAM configuration in the recovered environment.
+
+13\. Evaluate whether the recovered data age meets the defined RPO.
+
+14\. Evaluate whether service restoration time meets the defined RTO.
+
+15\. Periodically test same-project and cross-project recovery procedures.
+
+16\. Preserve recovery evidence and document unresolved risks.
 
 These recommendations describe production validation practices rather than additional actions independently demonstrated by the lab screenshots.
 
@@ -728,48 +805,72 @@ This investigation was conducted within an authorized, temporary Google Cloud tr
 
 The following limitations apply:
 
-1. **Simulated incident:** The exercise described fictional unauthorized access. The screenshots do not independently establish an actual intrusion or compromise.
-2. **Backup configuration:** The first screenshot displayed the template settings but did not independently prove the template had already been saved.
-3. **Backup interval:** The configured two-hour schedule did not establish that backups consistently completed every two hours.
-4. **Retention:** The two-day expiration setting was visible, but actual backup retention behavior was not independently tested.
-5. **Workload onboarding:** The second screenshot confirmed successful onboarding but did not display the exact template name or a completed backup job.
-6. **Service account roles:** IAM roles were described in the lab instructions, but the preserved screenshots did not verify the final role assignments.
-7. **Recovery images:** The evidence did not display the selected backup-image identifiers or recovery-point timestamps.
-8. **Same-project recovery:** The original and recovered VMs were running, but restored data and applications were not independently validated.
-9. **Cross-project recovery:** The alternate-project VM was running, but the screenshot did not independently verify the image source or recovery job details.
-10. **Application availability:** No preserved application-level connectivity or functionality testing demonstrated complete service restoration.
-11. **Data integrity:** Filesystem consistency and restored data integrity were not independently established.
-12. **Recovery objectives:** Actual Recovery Point Objective and Recovery Time Objective values could not be calculated from the available screenshots.
-13. **Recovery isolation:** Cross-project deployment demonstrated a separate destination project but did not establish complete security or administrative isolation.
+1\. ****Simulated incident:**** The exercise described fictional unauthorized access. The screenshots do not independently establish an actual intrusion or compromise.
+
+2\. ****Backup configuration:**** The first screenshot displayed the template settings but did not independently prove the template had already been saved.
+
+3\. ****Backup interval:**** The configured two-hour schedule did not establish that backups consistently completed every two hours.
+
+4\. ****Retention:**** The two-day expiration setting was visible, but actual backup retention behavior was not independently tested.
+
+5\. ****Workload onboarding:**** The second screenshot confirmed successful onboarding but did not display the exact template name or a completed backup job.
+
+6\. ****Service account roles:**** IAM roles were described in the lab instructions, but the preserved screenshots did not verify the final role assignments.
+
+7\. ****Recovery images:**** The evidence did not display the selected backup-image identifiers or recovery-point timestamps.
+
+8\. ****Same-project recovery:**** The original and recovered VMs were running, but restored data and applications were not independently validated.
+
+9\. ****Cross-project recovery:**** The alternate-project VM was running, but the screenshot did not independently verify the image source or recovery job details.
+
+10\. ****Application availability:**** No preserved application-level connectivity or functionality testing demonstrated complete service restoration.
+
+11\. ****Data integrity:**** Filesystem consistency and restored data integrity were not independently established.
+
+12\. ****Recovery objectives:**** Actual Recovery Point Objective and Recovery Time Objective values could not be calculated from the available screenshots.
+
+13\. ****Recovery isolation:**** Cross-project deployment demonstrated a separate destination project but did not establish complete security or administrative isolation.
 
 ## Skills Demonstrated
 
 ### Cloud Backup Management
 
 - Configured a Google Cloud Backup and DR template.
+
 - Evaluated snapshot backup frequency and retention settings.
+
 - Reviewed the relationship between backup intervals and recovery objectives.
+
 - Documented workload onboarding into a backup protection workflow.
 
 ### Disaster Recovery Operations
 
 - Followed a Compute Engine snapshot-based recovery workflow.
+
 - Verified a recovered instance running alongside its source VM.
+
 - Documented recovery into an alternate Google Cloud project and region.
+
 - Compared same-project and cross-project recovery outcomes.
 
 ### Identity and Recovery Security
 
 - Reviewed prescribed service account permissions for backup operations.
+
 - Examined the role of cross-project IAM access in recovery.
+
 - Identified security considerations involving backup integrity, permissions, and recovery isolation.
 
 ### Security Validation and Reporting
 
 - Distinguished configured backup policies from completed backup operations.
+
 - Evaluated recovered VM status without overstating application recovery.
+
 - Identified evidence required to validate RPO and RTO.
+
 - Documented recovery outcomes, security implications, and limitations.
+
 - Preserved screenshots supporting infrastructure-level recovery observations.
 
 ## Conclusion
