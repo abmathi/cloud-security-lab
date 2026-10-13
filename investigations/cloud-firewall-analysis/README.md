@@ -100,3 +100,104 @@ The report will document four findings:
 4. Independent Before-and-After Traffic Validation
 
 The final sections will summarize security implications, evidence limitations, skills demonstrated, and the supporting screenshot index.
+
+## Investigation Findings
+
+### Finding 1 — Initial HTTP Network Traffic and VPC Flow Log Analysis
+
+#### Investigation Context
+
+The first phase of the Cymbal Bank firewall investigation involved establishing a baseline of network traffic associated with the supplied Apache web server.
+
+The training environment included an existing Google Cloud VPC named `vpc-net`, a subnet named `vpc-subnet` with VPC Flow Logs enabled, and a Compute Engine instance named `web-server`.
+
+The VM was located in `us-central1-a` and carried the `http-server` network tag.
+
+The guided exercise involved permitting HTTP and SSH access, generating an HTTP connection to the server, and examining the associated VPC Flow Logs.
+
+The objective was to identify the network connection recorded in Cloud Logging before evaluating the subsequent HTTP denial configuration.
+
+#### VPC Flow Log Investigation
+
+I opened Google Cloud Logs Explorer and selected the VPC Flow Logs associated with the subnet.
+
+The preserved query included the following log source filters:
+
+```text
+resource.type="gce_subnetwork"
+log_name="projects/qwiklabs-gcp-03-e4eca9aa31dd/logs/compute.googleapis.com%2Fvpc_flows"
+```
+
+An additional source-IP condition was visible in the query editor, but the actual address was redacted in the screenshot.
+
+The query returned one matching log entry in the displayed results.
+
+#### Observed Network Connection
+
+I expanded the log entry and examined the connection and destination-instance fields.
+
+| Log Attribute | Observed Value |
+| --- | --- |
+| Resource type | `gce_subnetwork` |
+| Log source | `compute.googleapis.com/vpc_flows` |
+| Destination VM | `web-server` |
+| Destination zone | `us-central1-a` |
+| Destination IP address | `10.1.3.2` |
+| Destination port | `80` |
+| Protocol number | `6` |
+| Transport protocol | TCP |
+| Source IP address | Redacted in screenshot |
+| Source port | `55011` |
+| Bytes sent | `3016` |
+| Packets sent | `64` |
+| Log entry timestamp | September 21, 2026, 22:18:55.416, as displayed |
+
+![Initial HTTP connection in VPC Flow Logs](evidence/01-initial-http-vpc-flow-log.png)
+
+*Figure 1 — Google Cloud Logs Explorer showing a VPC Flow Log entry for TCP traffic to destination IP `10.1.3.2` on port `80`, associated with the `web-server` instance. The source IP is redacted, and no firewall disposition is shown.*
+
+The destination port `80` corresponded to HTTP traffic.
+
+The protocol value `6` identified TCP.
+
+The `dest_instance` fields associated the flow with the `web-server` Compute Engine instance.
+
+The source-IP address was obscured in the preserved evidence and was not reconstructed.
+
+The `bytes_sent` and `packets_sent` values represented the traffic measurements recorded for the flow-log entry.
+
+#### Traffic Analysis
+
+The record established that Cloud Logging captured TCP traffic associated with the Apache web server.
+
+The observed destination port and instance metadata were consistent with the lab's HTTP connection-generation procedure.
+
+However, a VPC Flow Log is not equivalent to a firewall rules logging entry.
+
+The preserved record did not include an explicit `ALLOWED` or `DENIED` disposition.
+
+Therefore, this screenshot independently verifies observed TCP traffic to destination port `80`, but it does not establish which firewall rule evaluated the connection or whether the HTTP request completed successfully.
+
+The lab procedure described accessing the Apache web server through its external IP address, but the screenshot alone does not verify the HTTP response or application content.
+
+#### Security Relevance
+
+VPC Flow Logs can help security analysts investigate network communication by providing connection metadata, including IP addresses, protocols, destination ports, associated resources, and traffic measurements.
+
+In a firewall investigation, these logs provide useful context for identifying traffic patterns before or after a configuration change.
+
+However, determining the action taken by a firewall requires appropriate firewall rule logging or other supporting evidence.
+
+The distinction is important when validating security controls: evidence of traffic does not automatically demonstrate that the traffic was permitted or blocked by a particular rule.
+
+#### Analyst Assessment
+
+**Assessment: Initial TCP traffic to the Apache web server's HTTP port identified in Google Cloud VPC Flow Logs.**
+
+The preserved log entry associated destination IP `10.1.3.2` and TCP port `80` with the `web-server` instance in `us-central1-a`.
+
+The record included the source port, protocol, and traffic measurements, establishing a network-activity baseline for the investigation.
+
+The screenshot did not independently establish firewall disposition or successful HTTP application access.
+
+The next phase examines the configured firewall rules and the introduction of the HTTP denial control.
