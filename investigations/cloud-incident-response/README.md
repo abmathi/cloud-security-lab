@@ -261,3 +261,90 @@ The report established a baseline of control findings before the documented reme
 The original lab instructions identified network exposure, storage permissions, VM configuration, and logging as priority concerns.
 
 The next investigation phase examines the affected cloud resources and the findings associated with those risks.
+
+### Finding 3 — Detailed Compute Engine and Firewall Security Findings
+
+#### Investigation Context
+
+After examining the initial Security Command Center overview and PCI DSS compliance baseline, I reviewed the individual security findings associated with the simulated Cymbal Retail incident.
+
+The objective was to identify specific misconfigurations affecting the application virtual machine and VPC firewall rules before proceeding with recovery and hardening.
+
+#### Compute Engine Findings
+
+The Security Command Center findings list displayed five records associated with the Compute Engine instance `cc-app-01`.
+
+| Finding Category | Severity | Finding Class |
+| --- | --- | --- |
+| `Public IP address` | High | Misconfiguration |
+| `Default service account used` | Medium | Misconfiguration |
+| `Full API access` | Medium | Misconfiguration |
+| `Compute Secure Boot disabled` | Medium | Misconfiguration |
+| `Malware: bad domain` | Low | Threat |
+
+![Compute Engine security findings](evidence/03-compute-engine-security-findings.png)
+
+*Figure 3 — Security Command Center showing five findings associated with the `cc-app-01` Compute Engine instance, including public IP exposure, service account configuration, API access, Secure Boot, and a low-severity threat finding.*
+
+These findings identified several potential security concerns.
+
+The public IP finding indicated internet-facing connectivity at the instance level, subject to the project's effective firewall rules and other controls.
+
+The default service account and Full API access findings indicated identity and access configurations requiring further review. Broad API access scopes do not independently grant permissions beyond those available through the associated service account's IAM roles.
+
+The Secure Boot finding identified a disabled virtual-machine security feature.
+
+The `Malware: bad domain` finding provided a threat-detection lead, but the preserved screenshot did not include the detailed indicators, associated process activity, or network evidence necessary to independently establish malware infection.
+
+#### Firewall Findings
+
+The second findings view displayed six records associated with existing VPC firewall rules.
+
+| Finding Category | Severity | Affected Firewall Rule |
+| --- | --- | --- |
+| `Open SSH port` | High | `default-allow-ssh` |
+| `Open RDP port` | High | `default-allow-rdp` |
+| `Firewall rule logging disabled` | Medium | `default-allow-ssh` |
+| `Firewall rule logging disabled` | Medium | `default-allow-icmp` |
+| `Firewall rule logging disabled` | Medium | `default-allow-internal` |
+| `Firewall rule logging disabled` | Medium | `default-allow-rdp` |
+
+![VPC firewall security findings](evidence/04-vpc-firewall-security-findings.png)
+
+*Figure 4 — Security Command Center showing six findings involving open SSH/RDP ports and disabled firewall rule logging.*
+
+The Open SSH and Open RDP findings indicated potentially excessive administrative-access exposure through the corresponding firewall rules.
+
+The disabled logging findings indicated reduced network visibility for traffic associated with those rules.
+
+Because a firewall finding does not independently establish that a service was reachable or exploited, additional network and system evidence would be required to assess actual exposure and access.
+
+#### Risk Prioritization
+
+The investigation prioritized the following areas:
+
+| Priority | Affected Component | Rationale |
+| --- | --- | --- |
+| High | `cc-app-01` Compute Engine instance | Public network exposure and multiple security findings |
+| High | `default-allow-ssh` | High-severity SSH exposure finding |
+| High | `default-allow-rdp` | High-severity RDP exposure finding |
+| Medium | Firewall rule logging | Visibility gaps across multiple rules |
+| Medium | Service account and API access configuration | Potentially excessive access requiring further review |
+| Medium | Compute Secure Boot | Disabled VM security feature |
+| Investigate | `Malware: bad domain` | Threat-detection lead requiring additional technical evidence |
+
+These priorities reflected the reported severity, the simulated incident scenario, and the relevance of each configuration to containment and recovery.
+
+The screenshot evidence did not independently confirm an exploit path connecting the findings to the fictional breach.
+
+#### Analyst Assessment
+
+**Assessment: Eleven Security Command Center findings identified across Compute Engine and VPC firewall configurations.**
+
+Five findings affected the `cc-app-01` virtual machine, including one Low-severity threat finding.
+
+Six findings affected existing VPC firewall rules, including two High-severity open-port findings.
+
+The results supported recovery planning, restriction of administrative network access, and improved firewall visibility.
+
+The following investigation stages document the corresponding cloud-resource configurations and remediation workflow.
