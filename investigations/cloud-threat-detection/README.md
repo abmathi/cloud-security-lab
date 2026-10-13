@@ -632,3 +632,145 @@ The expanded Logs Explorer query identified three Resource Manager operations as
 The investigation demonstrated how broadening a detector-specific query can reveal surrounding administrative activity and improve alert context.
 
 The evidence supports correlation of the recorded operations, but not a claim of confirmed malicious activity or successful external account access.
+
+## Security Implications
+
+This investigation demonstrated how Google Cloud Event Threat Detection findings can support the identification and investigation of sensitive IAM changes.
+
+The primary security concern was an external project ownership invitation generated from an authorized training account. The investigation also demonstrated why analysts must distinguish expected administrative provisioning from suspicious access changes.
+
+| Security Area | Observation | Security Implication |
+| --- | --- | --- |
+| Threat detection | SCC displayed two high-severity IAM anomalous grant findings | Sensitive IAM changes can trigger security investigations |
+| Contextual triage | One finding matched expected automated project provisioning | Alert severity must be interpreted with trusted operational context |
+| External access | An external Gmail identity was invited to receive project Owner access | Unexpected external privileged access warrants investigation |
+| Audit-log corroboration | Cloud Audit Logs recorded the ownership invitation method and associated principal | Underlying telemetry can corroborate a detection |
+| Remediation | IAM access editor showed the external principal's Owner role selected for removal | Role removal is an appropriate response to unauthorized or unnecessary access |
+| Cross-event correlation | Three related IAM methods appeared within approximately 239 milliseconds | Broader log searches can reveal additional activity surrounding an alert |
+
+### Detection Versus Confirmed Compromise
+
+The high-severity Event Threat Detection findings identified security-sensitive IAM operations. They did not independently establish that an attacker compromised an identity or accessed the project.
+
+The suspicious external invitation was deliberately generated during an authorized lab exercise.
+
+In a production investigation, the analyst would need to establish whether the invitation was approved, whether the external identity obtained effective access, and whether it performed any subsequent administrative actions.
+
+The presence of a high-severity finding should therefore trigger an evidence-based investigation rather than an automatic conclusion of compromise.
+
+### Value of Audit-Log Correlation
+
+The investigation combined Security Command Center findings with Google Cloud Admin Activity logs.
+
+The underlying audit event corroborated the ownership invitation's administrative method, recorded principal, recipient, and caller IP.
+
+The independent investigation then expanded the audit-log query and identified three temporally related operations involving the same training account and project.
+
+This demonstrated how surrounding administrative events can improve alert interpretation beyond the original finding.
+
+## Remediation Recommendations
+
+The following recommendations distinguish the lab's documented remediation workflow from additional controls appropriate in a production environment.
+
+| Priority | Recommended Action | Investigation Status |
+| --- | --- | --- |
+| High | Review unexpected external Owner invitations | Investigated |
+| High | Remove unauthorized or unnecessary project-level Owner access | Removal workflow documented; final saved policy not independently verified |
+| High | Verify invitation acceptance and effective permissions | Not independently verified |
+| High | Review subsequent activity by external privileged identities | Recommended |
+| Medium | Restrict broad Owner grants according to least privilege | Recommended |
+| Medium | Monitor sensitive IAM role grants and policy changes | Recommended |
+| Medium | Correlate SCC findings with Cloud Audit Logs | Demonstrated |
+| Medium | Confirm remediation using updated IAM policy and audit evidence | Recommended; not independently completed |
+
+### Recommended Production Investigation Workflow
+
+For a comparable production finding, an analyst should:
+
+1. Validate the SCC finding category, severity, resource, and event timestamp.
+2. Identify the calling principal and the identity receiving permissions.
+3. Confirm the administrative operation using Cloud Audit Logs.
+4. Compare the change with approved IAM provisioning workflows.
+5. Determine whether an external invitation was accepted or access became effective.
+6. Review the recipient's subsequent authentication and administrative activity.
+7. Remove unauthorized or unnecessary privileged access.
+8. Verify the updated IAM policy and examine relevant policy-change audit events.
+9. Assess whether broader identity compromise or additional unauthorized changes occurred.
+10. Document evidence, containment decisions, and remaining investigative gaps.
+
+These recommendations extend beyond the preserved lab evidence and should not be interpreted as actions completed during the exercise.
+
+## Evidence Limitations
+
+The investigation was conducted in an authorized Google Cloud training project using intentionally generated IAM activity.
+
+The following limitations apply:
+
+1. **Simulated scenario:** The suspicious external Owner invitation was intentionally created for training. No real-world compromise was demonstrated.
+2. **Expected provisioning classification:** The earlier finding was assessed as expected activity using the documented Qwiklabs provisioning context. The screenshot alone would not prove authorization in another environment.
+3. **Detection scope:** Two high-severity findings were visible, but the preserved screenshots do not establish comprehensive detection coverage or the absence of other security events.
+4. **Invitation outcome:** The `InsertProjectOwnershipInvite` audit event establishes an invitation request, not independently verified acceptance or successful use of Owner permissions.
+5. **Identity attribution:** Cloud Audit Logs recorded the calling principal and source IP address. These fields do not independently identify the physical operator or establish malicious intent.
+6. **Remediation verification:** The IAM screenshot shows the external principal's Owner role in the access editor and the deletion control. It does not demonstrate a saved policy or final absence of the role.
+7. **Audit correlation:** The three independently identified IAM operations occurred close together and involved the same principal and project, but the screenshot does not expose complete payloads for every event.
+8. **Timestamp differences:** The SCC finding and corresponding Cloud Audit Log recorded timestamps approximately 20 seconds apart. The preserved evidence does not establish the exact reason for this difference.
+9. **Environment scope:** The investigation did not evaluate production identity governance, organization policies, long-term telemetry retention, or enterprise-wide access review controls.
+
+## Skills Demonstrated
+
+### Cloud Threat Detection and SOC Triage
+
+- Investigated high-severity Google Cloud Event Threat Detection findings.
+- Analyzed IAM anomalous grant alerts in Security Command Center.
+- Differentiated expected provisioning activity from suspicious external access.
+- Examined alert severity, source properties, administrative methods, and affected identities.
+- Correlated cloud threat findings with underlying audit-log evidence.
+
+### IAM and Cloud Security
+
+- Investigated project-level Owner role grants.
+- Identified an external identity targeted by a privileged access invitation.
+- Distinguished the calling principal from the receiving IAM member.
+- Reviewed an IAM access-remediation workflow.
+- Developed recommendations for least privilege and validation of effective access.
+
+### Log Analysis and Incident Investigation
+
+- Applied Logs Explorer filters to isolate sensitive IAM operations.
+- Examined Cloud Audit Log fields for actor, recipient, source IP, resource, and timestamp.
+- Independently broadened a method-specific search to identify related IAM policy operations.
+- Reconstructed a short administrative activity sequence from three audit records.
+- Documented evidence limitations and avoided unsupported compromise or remediation claims.
+
+## Conclusion
+
+This investigation examined two high-severity IAM anomalous grant findings generated by Google Cloud Event Threat Detection.
+
+The first finding represented automated project provisioning that was expected within the documented training environment.
+
+The second finding involved a deliberately introduced invitation to grant project-level Owner access to an external Gmail identity.
+
+Cloud Audit Logs corroborated the suspicious invitation by recording the administrative method, acting principal, external recipient, and caller IP address.
+
+The remediation phase documented the external principal's Owner role in the IAM access editor and the role-removal workflow. However, the preserved screenshot did not independently verify the final IAM policy state.
+
+The independent investigation extended the guided exercise by broadening the audit-log query and identifying three IAM-policy-related operations within approximately 239 milliseconds.
+
+The primary learning outcome was the importance of combining cloud threat detection, contextual triage, audit-log corroboration, IAM access assessment, and surrounding-event correlation.
+
+These skills are relevant to SOC investigations, cloud security operations, identity security, and incident response.
+
+## Evidence Index
+
+| Figure | Evidence File | Description |
+| --- | --- | --- |
+| 1 | `01-iam-anomalous-grant-findings.png` | Two high-severity IAM anomalous grant findings in SCC |
+| 2 | `02-expected-iam-grant-summary.png` | Earlier finding associated with automated provisioning |
+| 3 | `03-expected-iam-grant-source-properties.png` | Expected training-domain Owner grant source properties |
+| 4 | `04-external-owner-invitation-summary.png` | Suspicious external Owner invitation finding |
+| 5 | `05-external-owner-invitation-source-properties.png` | External recipient and anomalous-grant source properties |
+| 6 | `06-external-owner-invitation-audit-log.png` | Cloud Audit Log corroborating the ownership invitation |
+| 7 | `07-external-owner-role-removal.png` | IAM access editor showing Owner role-removal workflow |
+| 8 | `08-independent-iam-policy-correlation.png` | Independent correlation of three IAM-related administrative events |
+
+All eight screenshots are located in the accompanying [`evidence/`](evidence/) directory.
