@@ -747,3 +747,104 @@ The final screenshot supports the conclusion that the visible firewall configura
 However, the `limit-ports` rule continued to deny IAP-range SSH traffic, and inherited firewall policies were not available for inspection.
 
 The evidence therefore supports the documented firewall cleanup and logging configuration, but not a claim of fully validated restricted SSH access.
+
+### Finding 8 — Post-Remediation PCI DSS Compliance Assessment
+
+#### Investigation Context
+
+After completing the documented Compute Engine recovery, Cloud Storage access remediation, and VPC firewall configuration changes, I returned to Google Cloud Security Command Center to review the PCI DSS 3.2.1 compliance report.
+
+The objective was to compare the visible compliance findings before and after remediation and evaluate whether the reported security posture had improved.
+
+The initial assessment identified five non-compliant controls, with findings involving logging, network access, and access-control concerns.
+
+#### Post-Remediation Compliance Report
+
+I opened Security Command Center → Compliance and selected PCI DSS 3.2.1.
+
+The final screenshot displayed a summary message stating that no findings affecting PCI DSS 3.2.1 had been detected.
+
+The visible control rows were marked Compliant and displayed zero findings.
+
+| Verification Item | Observed Result |
+| --- | --- |
+| Compliance standard | PCI DSS 3.2.1 |
+| Reporting period | One month |
+| Summary | No findings affecting the standard detected |
+| Visible control statuses | Compliant |
+| Visible finding counts | 0 |
+| Detector health | Not independently verified |
+| Complete PCI DSS compliance | Not established by this report |
+
+![Post-remediation PCI DSS 3.2.1 compliance report](evidence/10-post-remediation-pci-dss-compliance.png)
+
+*Figure 10 — Post-remediation Security Command Center PCI DSS 3.2.1 report displaying no detected findings and zero findings for visible compliant controls. Detector health and complete organizational compliance are not independently verified.*
+
+The report also advised verifying that the detectors evaluating the compliance standard were active and running successfully.
+
+The screenshot did not independently provide detector-health information.
+
+Consequently, the final report supports a conclusion about the displayed Security Command Center findings, rather than a comprehensive determination of organizational compliance.
+
+#### Before-and-After Comparison
+
+The initial and final screenshots demonstrated a change in the compliance results displayed by Security Command Center.
+
+| Assessment Attribute | Initial Report | Final Report |
+| --- | --- | --- |
+| Overall report | Multiple non-compliant controls visible | No findings affecting PCI DSS 3.2.1 detected |
+| Control `10.1` | Non-compliant; 29 findings | Not individually visible |
+| Control `10.2` | Non-compliant; 29 findings | Not individually visible |
+| Control `1.2.1` | Non-compliant; 2 findings | Compliant; 0 findings |
+| Control `7.1.2` | Non-compliant; 1 finding | Not individually visible |
+| Control `7.2` | Non-compliant; 1 finding | Not individually visible |
+
+The initial screenshot explicitly showed five controls marked Non-compliant.
+
+The post-remediation screenshot showed the overall no-findings message and compliant results for the controls visible in the captured portion of the report.
+
+Control `1.2.1` was individually visible in both screenshots and changed from Non-compliant with two findings to Compliant with zero findings.
+
+The other previously non-compliant controls were not individually visible in the final screenshot, so their specific final rows could not be independently compared.
+
+#### Relationship to Remediation Activities
+
+The compliance-report comparison followed several documented remediation activities:
+
+1. Replacing the affected Compute Engine virtual machine through the prescribed snapshot-based recovery workflow.
+2. Changing the Cloud Storage bucket from a publicly accessible configuration to a nonpublic configuration with Public Access Prevention and uniform bucket-level access.
+3. Removing the broadly permissive default SSH, RDP, and ICMP firewall rules from the visible VPC firewall configuration.
+4. Enabling logging on the remaining visible firewall rules.
+5. Reviewing the final Security Command Center compliance report.
+
+The preserved screenshots provided direct before-and-after verification for Cloud Storage access controls and supporting evidence for firewall cleanup and logging changes.
+
+However, the compliance report alone did not establish that every security weakness identified earlier had been remediated.
+
+In particular, the `limit-ports` firewall rule remained configured as an ingress Deny rule for TCP port 22 from the Google Cloud IAP TCP forwarding source range.
+
+This configuration did not independently demonstrate successful restricted SSH administration.
+
+#### Compliance Interpretation
+
+Security Command Center compliance reporting evaluates supported cloud security findings against mapped compliance controls.
+
+A final report containing zero detected findings may indicate improvement in the assessed configuration, provided the applicable detectors are active and the expected resources are included.
+
+It does not independently demonstrate that all PCI DSS requirements have been satisfied.
+
+Formal compliance assessment would require additional organizational, technical, procedural, and evidentiary evaluation beyond the preserved lab screenshots.
+
+The fictional data-breach scenario was also not independently validated through forensic evidence, so the change in compliance findings should not be interpreted as proof that an actual incident was fully resolved.
+
+#### Analyst Assessment
+
+**Assessment: Post-remediation Security Command Center report displayed no detected PCI DSS 3.2.1 findings, compared with five visibly non-compliant controls in the initial report.**
+
+The final screenshot demonstrated an improved displayed compliance posture within the training environment.
+
+Control `1.2.1` was directly observed changing from Non-compliant with two findings to Compliant with zero findings.
+
+However, the preserved report did not independently verify detector health, all previously reported control rows, or complete PCI DSS compliance.
+
+The investigation therefore supports a conclusion of improved reported security posture, while recognizing the remaining verification limitations.
