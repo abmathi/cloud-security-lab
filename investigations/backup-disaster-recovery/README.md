@@ -339,3 +339,129 @@ The workflow showed the action **Apply a backup template**, associated with the 
 The lab instructions identified `vm-backup` as the intended template, but the screenshot did not independently display its name or prove that a backup job had completed.
 
 The next phase evaluates the same-project restoration procedure and the resulting recovered virtual machine.
+
+### Finding 3 — Same-Project Compute Engine Recovery Verification
+
+#### Investigation Context
+
+After onboarding the source Compute Engine virtual machine into Google Cloud Backup and DR, the next phase involved restoring a separate VM from an available recovery image.
+
+The objective was to perform the prescribed same-project restoration workflow and verify that the resulting virtual machine existed alongside the original workload.
+
+The fictional Cymbal Bank incident scenario required recovery of affected infrastructure following containment of a simulated security incident.
+
+This exercise focused on demonstrating infrastructure restoration rather than independently conducting a forensic investigation or validating production application recovery.
+
+#### Same-Project Recovery Procedure
+
+Following the lab instructions, I used the Backup and DR management console to begin the restoration workflow.
+
+The prescribed procedure involved:
+
+1. Navigating to **Backup & Recover → Recover**.
+2. Selecting the protected Compute Engine instance `lab-vm`.
+3. Reviewing the available backup images.
+4. Selecting an available recovery image.
+5. Choosing **Mount**.
+6. Selecting **Mount as new GCE instance**.
+7. Configuring the destination region as `europe-west1`.
+8. Configuring the destination zone as `europe-west1-b`.
+9. Naming the recovered instance `lab-vm-recovered`.
+10. Submitting the mount operation.
+11. Reviewing the recovery operation through the Job Monitor.
+12. Opening the Compute Engine VM instances page to verify the restored resource.
+
+The lab instructions described an expected recovery workflow in which the mount operation creates a new Compute Engine instance using a previously generated backup image.
+
+The preserved screenshot, however, does not show the backup-image identifier, mount configuration, or individual recovery job result.
+
+#### Recovered VM Verification
+
+I opened Compute Engine → VM instances in the original Google Cloud project.
+
+The preserved screenshot displayed the following resources:
+
+| VM Attribute | Original Instance | Recovered Instance |
+| --- | --- | --- |
+| Instance name | `lab-vm` | `lab-vm-recovered` |
+| Google Cloud project | `qwiklabs-gcp-04-19030dcfdf93` | `qwiklabs-gcp-04-19030dcfdf93` |
+| Zone | `europe-west1-b` | `europe-west1-b` |
+| Status | Running | Running |
+| Internal IP | `10.132.0.2` | `10.132.0.3` |
+| External IP | `34.38.168.125` | Not displayed |
+| Connection option | SSH | SSH |
+
+![Original and recovered Compute Engine instances](evidence/03-same-project-vm-recovery-verification.png)
+
+*Figure 3 — Compute Engine VM instances in project `qwiklabs-gcp-04-19030dcfdf93`, showing the original `lab-vm`, recovered `lab-vm-recovered`, and backup appliance running in `europe-west1-b`. The recovered VM has a separate internal IP address.*
+
+Both instances displayed green running-status indicators.
+
+The screenshot also showed the backup/recovery appliance:
+
+`qwiklabs-appliances-yn9a`
+
+The appliance was running in `europe-west1-b` with internal IP `10.20.0.2`.
+
+The original and recovered instances had distinct internal IP addresses, demonstrating that they were separate Compute Engine resources.
+
+#### Recovery Outcome Analysis
+
+The observed configuration was consistent with the lab's intended same-project recovery operation.
+
+The original `lab-vm` remained present and running.
+
+A second instance, `lab-vm-recovered`, was also present and running in the same zone.
+
+This supports the conclusion that the exercise resulted in a separately deployed recovery VM.
+
+However, the screenshot does not independently confirm the precise backup image or recovery point used to create that instance.
+
+It also does not establish that the restored VM's filesystem, applications, data, or dependencies were functioning correctly.
+
+The visible SSH connection option does not constitute proof of successful administrative access or application-level connectivity.
+
+#### Recovery Validation Considerations
+
+A production disaster recovery validation would require more than confirming that a Compute Engine instance was running.
+
+Additional validation could include:
+
+- Confirming the recovery-image identifier and backup timestamp.
+- Reviewing the recovery job's final completion status.
+- Verifying restored disks and filesystem consistency.
+- Confirming required applications and services start successfully.
+- Comparing critical restored data against expected recovery-state records.
+- Reviewing security configuration, IAM permissions, and network access.
+- Measuring the actual recovery duration and recovered data age.
+- Documenting whether established Recovery Time Objective (RTO) and Recovery Point Objective (RPO) requirements were met.
+
+These are recommended validation activities rather than additional checks established by the preserved screenshot.
+
+The configured two-hour backup interval from Finding 1 did not independently establish an achieved two-hour RPO.
+
+Likewise, the screenshot did not provide sufficient timing data to calculate the actual RTO.
+
+#### Security and Business Continuity Relevance
+
+Same-project restoration can provide an additional virtual machine to support recovery testing or operational restoration.
+
+Maintaining the original instance during the recovery process also allows comparison between source and recovered infrastructure.
+
+However, same-project recovery does not independently establish resilience against a project-wide compromise, access-control failure, or regional outage.
+
+A broader disaster recovery strategy should consider alternate locations, appropriate backup isolation, recovery permissions, and regular restoration testing.
+
+The following investigation phase examines restoration to a separate Google Cloud project.
+
+#### Analyst Assessment
+
+**Assessment: Same-project recovery instance `lab-vm-recovered` verified as running alongside the original `lab-vm`.**
+
+The Compute Engine instances page showed both VMs in project `qwiklabs-gcp-04-19030dcfdf93`, located in `europe-west1-b`, with separate internal IP addresses.
+
+This demonstrated a successful infrastructure-level recovery outcome consistent with the prescribed Backup and DR mounting procedure.
+
+The preserved evidence did not independently verify the specific backup image, restored data integrity, application functionality, or recovery performance objectives.
+
+The next phase examines restoration into an alternate Google Cloud project to demonstrate a broader disaster recovery deployment scenario.
