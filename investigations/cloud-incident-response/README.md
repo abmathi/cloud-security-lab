@@ -645,3 +645,105 @@ However, the rule used the **Deny** action for the IAP TCP forwarding range.
 As a result, the screenshot does not establish that IAP-based SSH access was enabled or that the intended restricted-access configuration was successfully achieved.
 
 This finding illustrates the importance of verifying actual firewall actions, source ranges, priorities, and effective rules rather than relying on rule names or descriptions.
+
+### Finding 7 — Firewall Hardening and Logging Verification
+
+#### Investigation Context
+
+After examining the `limit-ports` SSH firewall rule, I reviewed the remaining VPC firewall configuration.
+
+The simulated incident identified unrestricted SSH and RDP access, along with disabled firewall rule logging, as security concerns.
+
+The lab remediation procedure required removing three overly permissive default rules and enabling logging for the remaining rules.
+
+The objective was to verify the visible firewall configuration after these changes and identify any remaining access-control concerns.
+
+#### Firewall Rule Cleanup
+
+The lab instructions directed removal of the following rules:
+
+- `default-allow-ssh`
+- `default-allow-rdp`
+- `default-allow-icmp`
+
+These rules were previously associated with security findings involving network exposure or disabled logging.
+
+The post-remediation screenshot displayed only two VPC firewall rules in the current view.
+
+| Firewall Rule | Direction | Action | Protocols / Ports | Logging |
+| --- | --- | --- | --- | --- |
+| `limit-ports` | Ingress | Deny | TCP 22 | On |
+| `default-allow-internal` | Ingress | Allow | TCP 0–65535, UDP 0–65535, ICMP | On |
+
+![Final firewall rules and logging configuration](evidence/09-final-firewall-rules-and-logging.png)
+
+*Figure 9 — Google Cloud VPC firewall rules showing `limit-ports` and `default-allow-internal` with logging enabled. The custom SSH rule uses the Deny action, and the training account lacks permission to inspect inherited firewall policies.*
+
+The three default rules targeted for deletion were absent from the displayed list.
+
+This supports the conclusion that the visible project-level VPC firewall configuration no longer contained those permissive SSH, RDP, and ICMP rules.
+
+However, the screenshot did not provide a complete effective-policy analysis, including inherited firewall policies.
+
+#### Firewall Logging Verification
+
+Both remaining rules displayed logging as **On**.
+
+The `limit-ports` rule applied to SSH traffic matching its configured source range and target network tag.
+
+The `default-allow-internal` rule permitted a broad range of internal network protocols and ports.
+
+| Verification Item | Observed Result |
+| --- | --- |
+| `limit-ports` firewall logging | On |
+| `default-allow-internal` firewall logging | On |
+| Default SSH rule | Not visible |
+| Default RDP rule | Not visible |
+| Default ICMP rule | Not visible |
+| Inherited firewall policies | Not accessible with the training account |
+
+Enabling firewall rule logging improves visibility into traffic matching those rules.
+
+However, the preserved screenshot documents the logging configuration, not actual log records.
+
+It therefore does not independently demonstrate that matching traffic was generated or successfully recorded.
+
+#### Remaining SSH Access Concern
+
+The final firewall list confirmed the earlier observation that `limit-ports` used the **Deny** action for TCP port 22.
+
+The source range configured for this rule was the Google Cloud IAP TCP forwarding range, `35.235.240.0/20`.
+
+The lab objective was to preserve restricted administrative SSH access through IAP while removing broad internet-facing SSH access.
+
+However, an ingress Deny rule matching the IAP range does not permit the intended SSH connections.
+
+This represents a discrepancy between the intended remediation and the preserved firewall configuration.
+
+In a production environment, I would verify the effective firewall policies and configure a properly scoped ingress Allow rule for IAP-based SSH access before concluding that restricted administrative access was functional.
+
+The screenshot also displayed an insufficient-permissions warning for inherited firewall policies, limiting the completeness of the access assessment.
+
+#### Security Implications
+
+Removing broadly permissive administrative-access rules can reduce the attack surface of cloud infrastructure.
+
+Enabling firewall rule logging supports investigation and operational monitoring.
+
+However, secure firewall configuration requires validating the actual rule actions, matching conditions, priorities, and intended connectivity.
+
+A restrictive rule that blocks legitimate administrative access can introduce an availability or manageability problem, even if it reduces exposure.
+
+Similarly, the remaining `default-allow-internal` rule permits broad traffic between matching internal resources, which may warrant further segmentation in a production environment.
+
+The preserved evidence does not independently establish the complete effective network-access posture or confirm successful IAP SSH connectivity.
+
+#### Analyst Assessment
+
+**Assessment: Default SSH, RDP, and ICMP rules absent from the visible VPC firewall list, with logging enabled on both remaining rules.**
+
+The final screenshot supports the conclusion that the visible firewall configuration was simplified and logging was enabled.
+
+However, the `limit-ports` rule continued to deny IAP-range SSH traffic, and inherited firewall policies were not available for inspection.
+
+The evidence therefore supports the documented firewall cleanup and logging configuration, but not a claim of fully validated restricted SSH access.
