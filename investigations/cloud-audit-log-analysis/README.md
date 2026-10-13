@@ -511,3 +511,118 @@ The investigation identified one VM deletion event and two bucket deletion event
 The events occurred within approximately 37 seconds and were reconstructed into a chronological BigQuery activity timeline.
 
 The result demonstrated practical cloud audit-log correlation and SQL-based incident investigation without assuming malicious intent or independently verified resource-deletion outcomes.
+
+## Security Implications
+
+The investigation demonstrated how Google Cloud Audit Logs can support administrative activity monitoring, cloud incident reconstruction, and cross-service event correlation.
+
+| Security Area | Observation | Security Implication |
+| --- | --- | --- |
+| Administrative activity monitoring | Cloud Storage deletion events appeared in Logs Explorer | Admin Activity logs provide visibility into cloud-resource operations |
+| Identity attribution | Audit records contained authenticated-principal information | Recorded identities provide investigative leads, but do not independently establish who physically performed an action |
+| Resource identification | Audit payloads contained affected resource names | Analysts can associate logged operations with cloud assets |
+| Log export | Log Router was configured to route Admin Activity logs into BigQuery | Centralized analysis supports SQL-based investigation of exported records |
+| Compute Engine investigation | SQL filtered for `v1.compute.instances.delete` | Method-based queries can isolate potentially destructive VM operations |
+| Cloud Storage investigation | BigQuery displayed two bucket-deletion records | Exported records support timeline analysis and resource-level investigation |
+| Cross-service correlation | Three deletion records were associated with the same recorded principal within approximately 37 seconds | Correlation can reveal administrative activity patterns across multiple cloud services |
+
+### Investigation and Detection Opportunities
+
+The techniques demonstrated in this lab can support security monitoring for destructive administrative activity.
+
+Potential detection opportunities include unusual VM or bucket deletion operations, repeated destructive actions within short periods, and administrative events associated with identities that do not normally manage the affected resources.
+
+However, a useful production detection would need additional context to distinguish authorized maintenance or cleanup from suspicious activity.
+
+Relevant contextual evidence could include IAM role changes, authentication activity, change-management records, resource ownership, and expected administrative behavior.
+
+No production detection rule was implemented or validated as part of this investigation.
+
+### Audit Log Retention and Export Considerations
+
+Exporting Cloud Audit Logs to BigQuery provides a way to conduct SQL-based analysis of selected events.
+
+The investigation also demonstrated an important limitation of log-export workflows: Log Router sinks do not automatically backfill historical events when created.
+
+Consequently, the contents of a newly configured export destination may differ from records previously visible in Logs Explorer.
+
+In a production environment, analysts should verify log coverage, sink filters, destination access, retention configuration, and the time periods represented by exported records before concluding that an event did not occur.
+
+## Evidence Limitations
+
+This investigation was conducted within an authorized Google Cloud training environment using controlled administrative operations.
+
+The following limitations apply:
+
+1. **Simulated incident:** The scenario involved suspected unauthorized cloud activity, but the investigated operations were generated for training. No real-world compromise was established.
+
+2. **Screenshot scope:** The five numbered screenshots preserve selected log queries, audit-event fields, BigQuery results, and correlation output rather than a complete event export.
+
+3. **Identity attribution:** Audit records identified a training-account principal. This does not independently establish the physical operator, intent, or authorization status of each action.
+
+4. **Audit-event completeness:** Several structured fields were collapsed in the preserved Logs Explorer screenshots. Their full contents were not independently verified.
+
+5. **Compute Engine query:** The screenshot documenting the dedicated VM deletion query did not independently display its corresponding results. A matching VM deletion record was subsequently visible in the independent cross-service query.
+
+6. **Query-result consistency:** Some screenshots showed SQL text that did not correspond to the visible results pane. The analysis distinguishes displayed query construction from independently visible result records.
+
+7. **Export coverage:** Logs Explorer and BigQuery displayed different numbers of bucket-deletion records. The evidence does not independently establish complete log-export coverage or the exact reason for the difference.
+
+8. **Operation outcome:** Audit entries documenting deletion methods do not, by themselves, prove the final state of every associated cloud resource.
+
+9. **Environment scope:** The investigation used temporary training resources and did not evaluate production cloud monitoring, enterprise access governance, or long-term audit retention.
+
+## Skills Demonstrated
+
+### Google Cloud Security Operations
+
+- Investigated administrative activity using Cloud Audit Logs.
+- Applied Logs Explorer filters to isolate Cloud Storage deletion methods.
+- Examined structured audit fields for operation, resource, and principal context.
+- Configured an audit-log export workflow using Log Router and BigQuery.
+- Distinguished logged administrative actions from confirmed malicious activity.
+
+### SQL and Audit Log Analysis
+
+- Used BigQuery to investigate exported cloud audit records.
+- Applied resource-type and method-name filters to administrative events.
+- Used wildcard table names and date filters to scope audit-log analysis.
+- Selected timestamp, principal, resource, and operation fields for investigation.
+- Constructed a cross-service query combining Compute Engine and Cloud Storage deletion events.
+- Ordered records chronologically to reconstruct an administrative activity timeline.
+
+### Incident Investigation and Documentation
+
+- Correlated destructive administrative operations associated with a common recorded identity.
+- Distinguished scenario context from independently visible evidence.
+- Identified gaps in log coverage and query-result verification.
+- Evaluated the limitations of identity attribution and deletion-method observations.
+- Preserved supporting screenshots and documented evidence-based conclusions.
+
+## Conclusion
+
+This investigation demonstrated Google Cloud administrative activity analysis using Cloud Audit Logs, Logs Explorer, Log Router, BigQuery, and SQL.
+
+The guided exercises established a workflow for identifying bucket-deletion activity, inspecting audit metadata, exporting records, and investigating Compute Engine and Cloud Storage operations.
+
+The independent investigation extended the analysis by correlating one VM deletion record and two bucket-deletion records into a chronological activity timeline.
+
+All three correlated records identified the same training-account principal and occurred within approximately 37 seconds.
+
+The strongest outcome was demonstrating how SQL-based cross-service correlation can reveal related administrative activity that may not be apparent from isolated service-specific searches.
+
+The exercise also reinforced the importance of validating audit coverage, separating observable evidence from assumptions, and correlating administrative events with additional context before making security determinations.
+
+These skills are applicable to cloud security monitoring, SOC investigations, incident response, and audit-log analysis.
+
+## Evidence Index
+
+| Figure | Evidence File | Description |
+| --- | --- | --- |
+| 1 | `01-cloud-storage-deletion-logs.png` | Three Cloud Storage deletion events in Logs Explorer |
+| 2 | `02-expanded-audit-event.png` | Structured Cloud Storage Admin Activity event |
+| 3 | `03-compute-engine-deletion-query.png` | BigQuery VM deletion query and evidence limitations |
+| 4 | `04-bigquery-bucket-deletion-results.png` | Two Cloud Storage bucket-deletion records in BigQuery |
+| 5 | `05-cross-service-activity-timeline.png` | Independent correlation of VM and bucket deletion operations |
+
+All numbered evidence screenshots are located in the accompanying [`evidence/`](evidence/) directory.
