@@ -79,3 +79,75 @@ The report will document the following investigation stages:
 5. Independent Cross-Service Activity Correlation
 
 The final sections will summarize security implications, evidence limitations, skills demonstrated, and supporting evidence.
+
+## Investigation Findings
+
+### Finding 1 — Cloud Storage Deletion Activity in Audit Logs
+
+#### Investigation Context
+
+The first investigation examined Google Cloud Admin Activity logs to identify administrative operations involving Cloud Storage resources.
+
+The scenario involved suspected unauthorized activity within Cymbal Bank's cloud environment. To reproduce relevant evidence, administrative operations were performed in an authorized training project.
+
+The objective was to isolate bucket-deletion events, identify the affected cloud service, and determine which details were available for further investigation.
+
+#### Log Query
+
+I used Google Cloud Logs Explorer to filter Admin Activity records for Cloud Storage deletion operations.
+
+The query was:
+
+```text
+logName = "projects/qwiklabs-gcp-01-f0ab12281570/logs/cloudaudit.googleapis.com%2Factivity"
+protoPayload.serviceName="storage.googleapis.com"
+protoPayload.methodName="storage.buckets.delete"
+```
+
+The filters targeted:
+
+| Field | Purpose |
+| --- | --- |
+| `logName` | Select Admin Activity audit records |
+| `protoPayload.serviceName` | Restrict results to Cloud Storage |
+| `protoPayload.methodName` | Identify bucket-deletion operations |
+
+#### Observed Audit Events
+
+The filtered query returned three matching entries.
+
+| Event | Timestamp (MST) | Operation |
+| --- | --- | --- |
+| 1 | 15:10:46 | `storage.buckets.delete` |
+| 2 | 15:27:15 | `storage.buckets.delete` |
+| 3 | 15:27:19 | `storage.buckets.delete` |
+
+![Google Cloud Storage deletion audit logs](evidence/01-cloud-storage-deletion-logs.png)
+
+*Figure 1 — Google Cloud Logs Explorer displaying three Admin Activity records filtered by `storage.googleapis.com` and `storage.buckets.delete`. The results identify bucket-deletion operations and their timestamps.*
+
+All three records were associated with Cloud Storage bucket-deletion activity.
+
+The results included event summaries and principal-identification fields. However, the screenshot did not expand the individual records sufficiently to establish every affected resource or fully verify the principal associated with each event.
+
+The visible records supported identification of the deletion method and event sequence, but further field inspection would be required for a complete attribution assessment.
+
+#### Security Relevance
+
+Cloud Storage bucket deletion is a destructive administrative operation that can affect resource availability and data retention.
+
+In a security investigation, such events may warrant review of the acting principal, affected resource, authorization context, and related administrative activity.
+
+However, the presence of bucket-deletion records does not independently establish malicious intent or unauthorized access.
+
+In this exercise, the operations were generated in an authorized test environment to reproduce a simulated incident.
+
+#### Analyst Assessment
+
+**Assessment: Three Cloud Storage bucket-deletion audit records identified.**
+
+Logs Explorer successfully isolated administrative activity associated with the `storage.buckets.delete` method.
+
+The events provided a starting point for investigating destructive cloud-resource activity and demonstrated the value of filtering audit records by service and operation.
+
+The next stages will examine log export, BigQuery analysis, and correlation across multiple cloud resource types.
