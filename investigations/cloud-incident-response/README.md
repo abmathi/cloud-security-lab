@@ -348,3 +348,100 @@ Six findings affected existing VPC firewall rules, including two High-severity o
 The results supported recovery planning, restriction of administrative network access, and improved firewall visibility.
 
 The following investigation stages document the corresponding cloud-resource configurations and remediation workflow.
+
+### Finding 4 — Compute Engine Recovery and VM Hardening
+
+#### Investigation Context
+
+The simulated Cymbal Retail incident identified the `cc-app-01` Compute Engine instance as an affected resource requiring recovery.
+
+The original Security Command Center findings included a public IP address, use of the default service account, full API access scopes, disabled Secure Boot, and a `Malware: bad domain` threat finding.
+
+The exercise prescribed stopping the original instance and deploying a replacement virtual machine from a pre-existing disk snapshot.
+
+The objective was to restore the application environment while reducing unnecessary network exposure and improving the replacement instance's security configuration.
+
+#### Recovery Procedure
+
+Following the lab instructions, the recovery workflow included:
+
+1. Stopping the original `cc-app-01` instance.
+2. Creating a replacement Compute Engine instance named `cc-app-02`.
+3. Selecting the pre-existing `cc-app01-snapshot` disk snapshot as the source for the new boot disk.
+4. Configuring an `e2-medium` machine type.
+5. Applying the `cc` network tag for targeted firewall rules.
+6. Configuring the external IPv4 address setting as `None`.
+7. Selecting the service account specified by the detailed lab procedure.
+8. Creating the replacement VM.
+9. Stopping the new instance temporarily to enable Shielded VM Secure Boot.
+10. Starting the replacement instance after saving the security configuration.
+11. Deleting the original `cc-app-01` instance as prescribed by the exercise.
+
+The snapshot was supplied as part of the training environment. The preserved evidence does not establish how the snapshot was created or independently verify its integrity.
+
+The lab instructions describe this process as restoring from a clean, pre-incident state. However, the snapshot's actual security condition was not independently validated through malware scanning or forensic analysis.
+
+#### Replacement VM Verification
+
+The Compute Engine details page displayed the following configuration:
+
+| Instance Attribute | Observed Value |
+| --- | --- |
+| Instance name | `cc-app-02` |
+| Instance status | Running |
+| Creation time | September 21, 2026, 5:11:57 PM UTC-7 |
+| Location | `us-west1-b` |
+| Machine type | `e2-medium` |
+| CPU architecture | `x86_64` |
+| Deletion protection | Disabled |
+| Snapshot source | Not visible in the preserved screenshot |
+| External IP configuration | Not visible in the preserved screenshot |
+| Secure Boot status | Not visible in the preserved screenshot |
+| Service account configuration | Not visible in the preserved screenshot |
+
+![Replacement Compute Engine VM details](evidence/05-replacement-compute-engine-vm.png)
+
+*Figure 5 — Compute Engine details page showing the replacement `cc-app-02` instance running in `us-west1-b`. The screenshot verifies the replacement VM's existence and basic configuration, but does not independently establish its snapshot source or all security settings.*
+
+The screenshot confirms that the replacement instance was created and running.
+
+It does not independently demonstrate that the original instance was deleted, that the replacement boot disk originated from the specified snapshot, or that all intended security settings were successfully applied.
+
+#### Security Hardening Objectives
+
+The recovery procedure incorporated several security improvements.
+
+| Security Control | Intended Improvement |
+| --- | --- |
+| Snapshot-based replacement | Restore from a prior disk state rather than continuing to use the affected VM |
+| No external IPv4 address | Reduce direct internet exposure of the replacement instance |
+| Shielded VM Secure Boot | Help prevent unauthorized boot components from loading |
+| `cc` network tag | Apply narrowly scoped firewall rules to the intended instance |
+| Service account review | Avoid unnecessary default credentials and excessive effective permissions |
+| Original VM removal | Retire the previously affected instance after recovery |
+
+These controls reflect the documented procedure and intended remediation objectives.
+
+The preserved screenshot verifies the replacement instance's running state but does not independently confirm the effectiveness or final state of each control.
+
+#### Incident Response Considerations
+
+Replacing a potentially compromised virtual machine can be an effective recovery approach when an appropriate recovery point is available.
+
+However, snapshot-based recovery does not automatically prove that a system is malware-free.
+
+A production recovery process would also require validation of the recovery point, review of relevant persistence mechanisms, credential rotation where applicable, assessment of attached storage, and verification that the original access path had been addressed.
+
+Deleting a compromised instance may also destroy useful forensic evidence if disk images, logs, and other artifacts have not been preserved.
+
+In this training exercise, the recovery and deletion workflow was prescribed rather than designed as a comprehensive forensic preservation process.
+
+#### Analyst Assessment
+
+**Assessment: Replacement Compute Engine instance `cc-app-02` verified as running following the documented recovery workflow.**
+
+The exercise provided a snapshot-based VM replacement procedure incorporating network and boot-security hardening objectives.
+
+The preserved screenshot confirms the existence and running state of the new instance.
+
+Additional configuration evidence and security validation would be required to confirm the snapshot origin, Secure Boot status, network exposure, service account privileges, and final disposition of the original VM.
