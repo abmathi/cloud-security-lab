@@ -311,3 +311,105 @@ The investigation demonstrated SQL filtering of audit records by resource type, 
 The preserved screenshot documents the query but does not independently verify the returned Compute Engine deletion events.
 
 The next finding examines Cloud Storage deletion records that are visible in BigQuery's results.
+
+### Finding 4 — Cloud Storage Deletion Analysis in BigQuery
+
+#### Investigation Context
+
+The fourth investigation examined Cloud Storage bucket-deletion activity using audit records exported to Google Cloud BigQuery.
+
+The objective was to identify destructive administrative operations, extract resource and principal information, and establish a timeline of recorded cloud activity.
+
+Unlike the initial Logs Explorer investigation, this stage used SQL to analyze structured audit-log data.
+
+#### BigQuery SQL Investigation
+
+The BigQuery editor displayed a query targeting Cloud Storage bucket-deletion events:
+
+```sql
+SELECT
+  timestamp,
+  resource.labels.bucket_name,
+  protopayload_auditlog.authenticationInfo.principalEmail,
+  protopayload_auditlog.resourceName,
+  protopayload_auditlog.methodName
+FROM
+  `auditlogs_dataset.cloudaudit_googleapis_com_activity_*`
+WHERE
+  PARSE_DATE('%Y%m%d', _TABLE_SUFFIX) BETWEEN
+    DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+    AND CURRENT_DATE()
+  AND resource.type = "gcs_bucket"
+  AND protopayload_auditlog.methodName = "storage.buckets.delete"
+ORDER BY
+  timestamp,
+  resource.labels.instance_id
+LIMIT 1000;
+```
+
+The query selected five investigation-relevant fields:
+
+| Field | Investigation Purpose |
+| --- | --- |
+| `timestamp` | Establish the event time |
+| `resource.labels.bucket_name` | Identify the associated Cloud Storage bucket |
+| `authenticationInfo.principalEmail` | Identify the principal recorded in the event |
+| `resourceName` | Identify the resource referenced by the operation |
+| `methodName` | Confirm the administrative method |
+
+The query restricted records to Cloud Storage buckets and the `storage.buckets.delete` method.
+
+The screenshot retains `resource.labels.instance_id` in the `ORDER BY` clause from the earlier Compute Engine analysis. For a bucket investigation, ordering by `timestamp` and `resource.labels.bucket_name` would be more appropriate.
+
+Because the displayed results may belong to a previously executed query, the screenshot does not independently verify execution of the exact SQL currently shown in the editor.
+
+#### Observed Bucket Deletion Records
+
+The BigQuery results pane displayed two Cloud Storage deletion records.
+
+| Event | Timestamp (UTC) | Recorded Principal | Resource Type |
+| --- | --- | --- | --- |
+| 1 | 2026-09-21 22:27:15.047019 | Training account | Cloud Storage bucket |
+| 2 | 2026-09-21 22:27:19.107056 | Training account | Cloud Storage bucket |
+
+![Cloud Storage bucket deletion results in BigQuery](evidence/04-bigquery-bucket-deletion-results.png)
+
+*Figure 4 — BigQuery interface displaying two Cloud Storage bucket-deletion audit records approximately four seconds apart. The results include timestamps, bucket identifiers, resource names, and recorded principal information. The SQL visible in the editor is not independently confirmed as the executed query that produced these rows.*
+
+Both results contained bucket-name and resource-name fields, along with the same visible training-account identity.
+
+The displayed events were separated by approximately four seconds.
+
+The results demonstrated how exported audit logs can support chronological analysis of administrative operations.
+
+However, the preserved screenshot does not expose all record details needed to establish the exact outcome, authorization context, or purpose of each operation.
+
+#### Comparison with Logs Explorer
+
+The initial Logs Explorer investigation identified three matching bucket-deletion audit records.
+
+The BigQuery results displayed two records associated with subsequent administrative activity.
+
+These observations should not be treated as contradictory because the two interfaces may represent different collection windows or sets of exported events.
+
+Google Cloud Log Router sinks do not automatically backfill historical log entries. Consequently, the available BigQuery dataset may not contain every event previously visible in Logs Explorer.
+
+#### Security Relevance
+
+Cloud Storage bucket-deletion records are relevant to investigations involving data availability, destructive activity, and unauthorized administrative changes.
+
+The timestamp, recorded principal, affected resource, and operation name provide a foundation for reconstructing administrative activity.
+
+When multiple destructive operations occur close together, analysts may prioritize additional review of the associated identities, access history, and surrounding cloud operations.
+
+However, temporal proximity and a shared recorded principal do not independently demonstrate malicious activity or compromise.
+
+#### Analyst Assessment
+
+**Assessment: Two Cloud Storage bucket-deletion records identified in exported BigQuery audit data.**
+
+The visible results provided timestamps, recorded principal information, and associated Cloud Storage resources.
+
+The investigation demonstrated how BigQuery can support audit-event filtering and timeline reconstruction.
+
+The records provide evidence of logged deletion operations, but additional audit fields and resource-state evidence would be required to establish their complete outcomes and authorization context.
