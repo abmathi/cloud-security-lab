@@ -92,3 +92,81 @@ The report will document the following stages:
 7. Post-Remediation Compliance Verification
 
 The final sections will summarize security implications, remediation outcomes, evidence limitations, skills demonstrated, and supporting evidence.
+
+## Investigation Findings
+
+### Finding 1 — Initial Cloud Security Posture Assessment
+
+#### Investigation Context
+
+The first phase of the simulated Cymbal Retail incident response involved evaluating existing cloud security misconfigurations.
+
+The exercise scenario described a breach involving customer information, but the initial task focused on identifying vulnerable or misconfigured cloud resources using Google Cloud Security Command Center (SCC).
+
+The objective was to identify the affected resource categories, evaluate the severity distribution, and prioritize subsequent investigation and remediation activities.
+
+#### Security Command Center Risk Overview
+
+I opened Security Command Center and reviewed the **Misconfigurations** dashboard using the **By resource type** view.
+
+The dashboard displayed the following findings:
+
+| Resource Type | Critical | High | Medium | Low |
+| --- | ---: | ---: | ---: | ---: |
+| Firewall | 0 | 2 | 4 | 0 |
+| `compute.Instance` | 0 | 1 | 3 | 0 |
+| Bucket | 0 | 1 | 1 | 1 |
+| `resourcemanager.Project` | 0 | 0 | 2 | 9 |
+| Network | 0 | 0 | 2 | 0 |
+| `compute.Project` | 0 | 0 | 1 | 0 |
+| `ServiceAccountKey` | 0 | 0 | 1 | 0 |
+| Subnetwork | 0 | 0 | 0 | 48 |
+| **Total** | **0** | **4** | **14** | **58** |
+
+![Initial SCC misconfiguration overview](evidence/01-initial-scc-misconfiguration-overview.png)
+
+*Figure 1 — Google Cloud Security Command Center misconfigurations grouped by resource type, showing High-severity findings affecting firewall rules, Compute Engine instances, and Cloud Storage buckets.*
+
+The resource-type breakdown contained no Critical findings but showed four High-severity misconfiguration findings.
+
+Firewall, Compute Engine instance, and Cloud Storage bucket categories accounted for the High-severity findings.
+
+The dashboard also displayed Medium- and Low-severity findings affecting several other resource types.
+
+The findings counts represent the visible security-check results grouped by resource type. They do not independently establish the number of distinct affected assets, successful exploitation, or direct involvement in the simulated breach.
+
+#### Initial Risk Prioritization
+
+The initial review identified three resource categories for priority investigation.
+
+| Priority | Resource Category | Investigation Rationale |
+| --- | --- | --- |
+| High | Firewall | Two High-severity findings indicated potentially significant network access misconfigurations |
+| High | Compute Engine | One High-severity instance finding warranted examination of VM exposure and recovery requirements |
+| High | Cloud Storage | One High-severity bucket finding warranted investigation of storage access controls |
+
+These priorities were based on the severity distribution and the incident scenario's known remediation requirements.
+
+The dashboard alone did not establish the specific technical cause of each finding or whether the affected resources were exploited.
+
+Further finding-level investigation was therefore required before attributing the simulated data breach to a particular configuration weakness.
+
+#### Security Relevance
+
+Security Command Center provides an aggregated view of security misconfigurations across supported Google Cloud resources.
+
+Grouping findings by resource type helps analysts identify areas that may require urgent review.
+
+However, finding severity should be evaluated together with exposure, affected data, resource criticality, and operational context.
+
+A High-severity configuration finding is not equivalent to a confirmed attack or verified breach path.
+
+#### Analyst Assessment
+
+**Assessment: Four High-severity misconfiguration findings identified across Firewall, Compute Engine, and Cloud Storage.**
+
+The initial SCC review established a baseline of visible cloud security findings and identified resource categories requiring further investigation.
+
+The results supported prioritization of network controls, virtual machine security, and storage permissions.
+
+The next phase examines PCI DSS compliance findings to identify additional control weaknesses relevant to the simulated incident.
