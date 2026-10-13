@@ -96,3 +96,121 @@ The report will document four findings:
 4. Cross-Project Compute Engine Disaster Recovery
 
 The final sections will summarize security implications, recovery limitations, recommendations, skills demonstrated, and supporting evidence.
+
+## Investigation Findings
+
+### Finding 1 — Backup Plan and Snapshot Policy Configuration
+
+#### Investigation Context
+
+The first phase of the Cymbal Bank disaster recovery exercise involved creating a backup plan template for Google Cloud Compute Engine virtual machines.
+
+The fictional incident scenario required preparing a recovery mechanism that could support restoration of cloud infrastructure following a security incident or operational disruption.
+
+The objective was to define a repeatable backup policy, examine its snapshot frequency and retention settings, and establish the intended protection configuration before enrolling the source virtual machine.
+
+#### Backup Template Configuration
+
+I opened the Google Cloud Backup and DR management console and navigated to:
+
+`Backup Plans → Templates → Create Template`
+
+I configured a backup template named:
+
+`vm-backup`
+
+The template description was:
+
+`Virtual Machine Backups`
+
+I then added a Production-to-Snapshot backup policy.
+
+The preserved screenshot showed the following settings:
+
+| Backup Configuration | Observed Value |
+| --- | --- |
+| Template name | `vm-backup` |
+| Description | `Virtual Machine Backups` |
+| Policy name | `Daily VM snapshot` |
+| Policy type | Snapshot |
+| Scheduling mode | Continuous |
+| Repeat interval | Every 2 hours |
+| Snapshot expiration | After 2 days |
+| Policy ID | `4363` |
+| Policy setting overrides | Yes |
+| Snapshot policies displayed | 1 |
+
+![Google Cloud Backup and DR snapshot policy](evidence/01-backup-template-snapshot-policy.png)
+
+*Figure 1 — Google Cloud Backup and DR template `vm-backup`, showing the `Daily VM snapshot` policy configured for continuous scheduling every two hours, with a two-day expiration setting.*
+
+The screenshot showed one snapshot policy associated with the backup template.
+
+The configuration also permitted policy-setting overrides.
+
+The policy's intended backup schedule was every two hours, with snapshots configured to expire after two days.
+
+#### Backup Frequency and Retention Analysis
+
+The policy name, `Daily VM snapshot`, could suggest a once-per-day backup schedule.
+
+However, the actual configuration specified:
+
+- Scheduling: `Continuous`
+- Repeat value: `Every 2 hours`
+- Expire after: `2 days`
+
+Therefore, the intended backup interval was two hours rather than twenty-four hours.
+
+The configured expiration setting established a two-day retention period for snapshots produced under the policy, subject to the service's actual retention behavior and successful backup execution.
+
+| Recovery Planning Attribute | Configured Value | Security Relevance |
+| --- | --- | --- |
+| Backup scheduling mode | Continuous | Supports recurring backup execution |
+| Backup repeat interval | Every 2 hours | Defines the intended frequency of recovery-point creation |
+| Snapshot expiration | 2 days | Limits how long snapshots are retained under the policy |
+| Policy overrides | Enabled | Permits applicable policy settings to be overridden |
+
+A more frequent backup schedule can reduce the amount of recent data potentially lost during recovery when backups complete successfully.
+
+However, the two-hour interval does not independently establish a guaranteed two-hour Recovery Point Objective (RPO).
+
+The actual recoverable point depends on successful backup execution, backup timing, and the availability and integrity of the resulting recovery images.
+
+Similarly, the two-day retention setting does not establish a Recovery Time Objective (RTO).
+
+RTO depends on the time needed to restore systems and resume required services.
+
+#### Backup Policy Verification
+
+The preserved screenshot displayed the configured snapshot policy within the backup template editor.
+
+It showed a **Save Template** button, indicating that the interface was displaying the configuration prior to, or during, the template-saving workflow.
+
+The image did not independently establish that the template had already been saved or that the scheduled backups had executed successfully.
+
+Subsequent evidence from the workload onboarding and recovery stages would provide additional information about use of the configured backup template.
+
+#### Security Relevance
+
+Backup policies contribute to organizational resilience by defining how protected workloads are backed up and how long recovery images remain available.
+
+In an incident response context, accessible and trustworthy recovery points may help restore operations following accidental deletion, system failure, ransomware, or another disruptive event.
+
+However, backup configuration alone is not equivalent to validated recoverability.
+
+Effective disaster recovery also requires verifying that backups complete successfully, recovery images remain usable, access controls protect backup infrastructure, and restored systems meet operational requirements.
+
+Retention policies should also reflect business, legal, and security requirements rather than relying solely on a training environment's short retention period.
+
+#### Analyst Assessment
+
+**Assessment: Continuous snapshot backup policy configured with a two-hour repeat interval and two-day expiration setting.**
+
+The preserved evidence showed a backup template named `vm-backup` containing the `Daily VM snapshot` policy.
+
+Despite the policy name, the configured schedule specified continuous backup execution every two hours.
+
+The screenshot established the intended backup frequency and retention settings but did not independently confirm successful template saving, scheduled backup execution, or recovery-point integrity.
+
+The next phase examines enrollment of the source Compute Engine instance into the configured backup protection workflow.
