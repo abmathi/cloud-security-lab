@@ -212,3 +212,106 @@ The firewall permitted ICMP, TCP ports `80` and `8080`, and TCP ports `1000-2000
 The review established the baseline configuration for subsequent Terraform deployment and independent hardening.
 
 The next phase examines the Terraform execution plan and the initial deployed firewall rule.
+
+### Finding 2 — Initial Terraform Planning and Firewall Deployment Verification
+
+#### Investigation Context
+
+After reviewing the initial Terraform configuration, I examined the infrastructure deployment plan and verified the resulting firewall rule in Google Cloud.
+
+The objective was to establish that the original Infrastructure as Code configuration was reflected in the deployed environment before performing independent security hardening.
+
+#### Terraform Execution Plan
+
+From the supplied Terraform project directory in Google Cloud Shell, I ran:
+
+```bash
+terraform apply
+```
+
+Terraform generated an execution plan containing three resource additions.
+
+| Terraform Resource | Planned Action | Purpose |
+| --- | --- | --- |
+| `google_compute_network.default` | Create | Provision the VPC network |
+| `google_compute_firewall.default` | Create | Provision the firewall rule |
+| `random_pet.suffix` | Create | Generate a resource-name suffix |
+
+![Initial Terraform deployment plan](evidence/02-initial-terraform-deployment-plan.png)
+
+*Figure 2 — Terraform apply execution plan showing three resource additions, including a VPC, firewall rule, and random resource-name suffix. The screenshot captures the plan before confirmation.*
+
+The plan summary reported:
+
+```text
+Plan: 3 to add, 0 to change, 0 to destroy.
+```
+
+The planned firewall allowed ICMP and TCP ports `80`, `8080`, and `1000-2000`.
+
+It also specified a `web` source-tag restriction and priority `1000`.
+
+The screenshot shows the plan and the interactive confirmation prompt. It does not independently capture the completed Terraform apply operation.
+
+#### Deployed Firewall Verification
+
+I then opened the Google Cloud VPC firewall rule details page.
+
+The deployed firewall showed the following configuration:
+
+| Firewall Attribute | Observed Value |
+| --- | --- |
+| Rule name | `test-firewall-helping-liger` |
+| Network | `test-network-helping-liger` |
+| Direction | Ingress |
+| Action on match | Allow |
+| Priority | `1000` |
+| Source filter | Network tag `web` |
+| Allowed TCP ports | `80`, `8080`, `1000-2000` |
+| ICMP | Allowed |
+| Firewall rule logging | Off |
+| Enforcement | Enabled |
+
+![Original deployed Google Cloud firewall](evidence/03-original-deployed-firewall.png)
+
+*Figure 3 — Google Cloud firewall `test-firewall-helping-liger` allowing ICMP and TCP ports 80, 8080, and 1000–2000 from sources with the `web` network tag. Firewall logging is Off.*
+
+The firewall's visible settings matched the traffic permissions defined in the original Terraform configuration.
+
+This provided evidence that the infrastructure resources had been provisioned with the intended initial firewall settings.
+
+The rule used a source network tag rather than an unrestricted source IP range.
+
+Consequently, the screenshot does not demonstrate that the allowed ports were exposed to all public internet addresses.
+
+#### Initial Security Assessment
+
+The deployed firewall allowed TCP ports `1000-2000` in addition to the application's assumed required ports.
+
+Under the independent exercise's requirements, those additional TCP ports were unnecessary.
+
+Their presence expanded the set of traffic that could be permitted from matching source instances if corresponding services were listening.
+
+The firewall also displayed logging as Off, limiting the availability of firewall rule logs for monitoring traffic evaluated against the rule.
+
+However, logging configuration was not the focus of the subsequent independent modification, and no evidence was preserved showing that logging was enabled later.
+
+#### Security Relevance
+
+Terraform enables infrastructure configurations to be defined and updated consistently through code.
+
+Comparing Terraform plans with deployed cloud-resource settings helps verify whether the intended configuration matches the visible infrastructure state.
+
+However, a successful deployment does not automatically establish that the resulting firewall follows least-privilege principles.
+
+This investigation identified an opportunity to reduce permitted TCP ports based on the application's assumed requirements.
+
+#### Analyst Assessment
+
+**Assessment: Original Terraform firewall configuration verified in the deployed Google Cloud environment.**
+
+The Terraform execution plan proposed creating three resources, including the VPC network and firewall.
+
+The deployed firewall permitted ICMP and TCP ports `80`, `8080`, and `1000-2000`, matching the original configuration.
+
+The review established a baseline for independently narrowing the firewall's permitted ports while documenting the source-tag restriction and disabled firewall logging.
