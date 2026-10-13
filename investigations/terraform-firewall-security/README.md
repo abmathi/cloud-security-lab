@@ -97,3 +97,118 @@ The report will document four findings:
 4. Post-Change Firewall Configuration Verification
 
 The final sections will summarize security implications, evidence limitations, skills demonstrated, and supporting screenshots.
+
+## Investigation Findings
+
+### Finding 1 — Terraform VPC and Firewall Configuration Review
+
+#### Investigation Context
+
+The first phase involved reviewing a supplied Terraform configuration used to provision networking resources for the fictional Cymbal Bank application.
+
+The objective was to identify the VPC and firewall resources defined in `main.tf`, determine the traffic permitted by the firewall, and establish the original configuration before deployment.
+
+This configuration would later provide the baseline for an independent network-security hardening exercise.
+
+#### Terraform Resource Configuration
+
+I examined the Terraform file containing two Google Cloud resources:
+
+- `google_compute_network.default` — defines the application VPC network.
+- `google_compute_firewall.default` — defines a firewall rule associated with that VPC.
+
+The original configuration included the following resource definitions:
+
+```hcl
+resource "google_compute_firewall" "default" {
+  name    = "test-firewall-${local.name_suffix}"
+  network = google_compute_network.default.name
+
+  allow {
+    protocol = "icmp"
+  }
+
+  allow {
+    protocol = "tcp"
+    ports    = ["80", "8080", "1000-2000"]
+  }
+
+  source_tags = ["web"]
+}
+
+resource "google_compute_network" "default" {
+  name = "test-network-${local.name_suffix}"
+}
+```
+
+![Original Terraform VPC and firewall configuration](evidence/01-original-terraform-firewall-configuration.png)
+
+*Figure 1 — Original `main.tf` defining the Google Cloud VPC and firewall resources, including ICMP, TCP ports 80 and 8080, the broader TCP 1000–2000 range, and a `web` source-tag restriction.*
+
+The use of `local.name_suffix` allowed the resource names to include a locally defined suffix.
+
+The screenshot did not show the definition of that local value, so its exact value could not be determined from this image alone.
+
+#### Firewall Configuration Analysis
+
+The Terraform firewall resource defined the following traffic permissions:
+
+| Attribute | Original Configuration |
+| --- | --- |
+| Firewall resource | `google_compute_firewall.default` |
+| Target VPC | `google_compute_network.default.name` |
+| Rule direction | Ingress, by default |
+| Rule action | Allow |
+| ICMP | Allowed |
+| TCP port `80` | Allowed |
+| TCP port `8080` | Allowed |
+| TCP port range `1000-2000` | Allowed |
+| Source restriction | `source_tags = ["web"]` |
+| Explicit target tags | Not specified in the visible resource |
+| Explicit firewall priority | Not specified in the visible resource |
+
+The firewall permitted ICMP and selected TCP traffic from sources matching the `web` network tag.
+
+Because no explicit target tags appeared in the resource definition, the rule was not restricted to a specific target tag in the visible configuration.
+
+The source-tag restriction is important: the rule should not be described as granting access to all public internet addresses.
+
+The screenshot documents the desired Terraform configuration, not an independently validated effective firewall policy.
+
+#### Initial Security Assessment
+
+The most significant issue identified in the original configuration was the permitted TCP port range:
+
+`1000-2000`
+
+This range included numerous ports beyond the two ports assumed to be required by the banking application.
+
+Allowing unnecessary ports can increase network exposure if matching source instances can connect to services listening on those ports.
+
+However, an allowed firewall port does not independently establish that a service is running, reachable, or vulnerable.
+
+The security assessment therefore focused on reducing unnecessary network permissions rather than claiming an observed exploit or confirmed public exposure.
+
+#### Least-Privilege Considerations
+
+Network least privilege involves permitting only the traffic necessary for legitimate application operations.
+
+Under the independent exercise's assumed requirements, the application needed TCP ports `80` and `8080`.
+
+The original Terraform configuration permitted those ports but also allowed TCP ports `1000-2000`.
+
+Removing the unnecessary range would create a narrower firewall configuration while preserving the explicitly required application ports.
+
+Before making the change in a production environment, an analyst would need to confirm application dependencies, source identities, and expected traffic patterns.
+
+#### Analyst Assessment
+
+**Assessment: Terraform configuration identified with an unnecessarily broad TCP port allowance under the assumed application requirements.**
+
+The original `main.tf` defined a Google Cloud VPC and associated ingress firewall rule.
+
+The firewall permitted ICMP, TCP ports `80` and `8080`, and TCP ports `1000-2000`, with a `web` source-tag restriction.
+
+The review established the baseline configuration for subsequent Terraform deployment and independent hardening.
+
+The next phase examines the Terraform execution plan and the initial deployed firewall rule.
