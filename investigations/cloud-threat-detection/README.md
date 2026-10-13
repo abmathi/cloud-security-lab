@@ -8,7 +8,7 @@ The scenario involved two types of administrative activity within an authorized 
 
 I investigated the findings using Security Command Center, reviewed source properties to identify the affected principals, and examined related Cloud Audit Logs to understand the underlying IAM activity.
 
-The guided investigation concluded with removing the external account's project-level Owner access.
+The guided investigation documented the workflow for removing the external account's project-level Owner access; the preserved screenshot does not verify the saved IAM policy.
 
 An independent investigation extended the analysis by broadening the Cloud Logging query to identify related IAM policy operations surrounding the suspicious grant.
 
@@ -32,12 +32,19 @@ The investigation was conducted in a temporary Google Cloud project using contro
 ### Investigation Objectives
 
 1. Generate a controlled project-level Owner grant to an external test principal.
+
 2. Identify IAM anomalous grant findings in Security Command Center.
+
 3. Distinguish expected project provisioning from suspicious external access.
+
 4. Inspect SCC finding details and source properties.
+
 5. Examine related IAM audit events in Logs Explorer.
+
 6. Remove the external principal's Owner role.
+
 7. Independently broaden the log investigation to identify surrounding IAM policy operations.
+
 8. Document the findings, remediation, security implications, and evidence limitations.
 
 ## Evidence Sources and Methodology
@@ -52,7 +59,7 @@ The original exercise instructions provide scenario context and the sequence of 
 
 | Phase | Analyst Activity |
 | --- | --- |
-| Activity generation | Assign project-level Owner access to an external test principal |
+| Activity generation | Initiate a project-level Owner invitation to an external test principal |
 | Alert triage | Review high-severity IAM anomalous grant findings |
 | Contextual investigation | Compare organization-associated provisioning with external access |
 | Finding analysis | Examine summary and source-property information |
@@ -63,11 +70,11 @@ The original exercise instructions provide scenario context and the sequence of 
 
 ### Evidence Standards
 
-The suspicious IAM grant was deliberately created in an authorized training environment. It was anomalous in the scenario but does not represent an independently verified real-world compromise.
+The suspicious external IAM ownership invitation was deliberately created in an authorized training environment. It was anomalous in the scenario but does not represent an independently verified real-world compromise.
 
-The investigation distinguishes expected provisioning activity from the deliberately introduced external Owner grant.
+The investigation distinguishes expected provisioning activity from the deliberately introduced external Owner invitation.
 
-A high-severity Event Threat Detection finding provides a reason to investigate; it does not independently prove that an attacker obtained access or abused the granted permissions.
+A high-severity Event Threat Detection finding provides a reason to investigate; it does not independently prove that an attacker obtained access or abused permissions.
 
 Remediation conclusions will be limited to the changes and validation visible in the preserved evidence.
 
@@ -76,10 +83,15 @@ Remediation conclusions will be limited to the changes and validation visible in
 The report will document the following stages:
 
 1. IAM Anomalous Grant Finding Identification
+
 2. Expected Provisioning Activity Analysis
+
 3. Suspicious External IAM Grant Analysis
+
 4. Cloud Audit Log Investigation
+
 5. IAM Access Remediation
+
 6. Independent IAM Policy-Change Correlation
 
 The final sections will cover security implications, evidence limitations, recommended controls, skills demonstrated, and an evidence index.
@@ -138,10 +150,15 @@ At this stage, the findings list did not provide sufficient context to distingui
 The next investigation stages would examine:
 
 1. The principals receiving IAM permissions.
+
 2. The roles associated with the grants.
+
 3. The source properties of each finding.
+
 4. The relationship between the reported activity and expected project provisioning.
+
 5. The associated Cloud Audit Logs.
+
 6. Whether the suspicious grant remained active and required remediation.
 
 #### Analyst Assessment
@@ -229,7 +246,7 @@ However, the original scenario established that the training environment automat
 
 The observed service account, Terraform-related user agent, and receiving member were consistent with that expected setup.
 
-Consequently, I classified the event as **expected administrative provisioning activity within the authorized training scenario**.
+Consequently, I classified the event as ****expected administrative provisioning activity within the authorized training scenario****.
 
 This conclusion relied on the documented lab context as well as the visible finding details.
 
@@ -371,8 +388,11 @@ The objective was to corroborate the Event Threat Detection finding using the un
 I used the following Logs Explorer query to isolate project ownership invitation events:
 
 ```text
+
 protoPayload.authorizationInfo.permission="resourcemanager.projects.setIamPolicy"
+
 protoPayload.methodName="InsertProjectOwnershipInvite"
+
 ```
 
 The query filtered audit records by the relevant IAM policy permission and administrative method.
@@ -488,9 +508,13 @@ Because the external account did not belong to the expected Qwiklabs training id
 The lab remediation procedure required:
 
 1. Opening IAM & Admin → IAM.
+
 2. Locating the external principal.
+
 3. Opening the principal's access editor.
+
 4. Selecting the deletion control for the Owner role.
+
 5. Saving the updated IAM policy.
 
 The screenshot captures the access editor and identifies the Owner role targeted for deletion.
@@ -541,7 +565,7 @@ The guided exercise focused on the `InsertProjectOwnershipInvite` event associat
 
 The independent investigation addressed a broader question:
 
-**What other IAM administrative operations occurred around the suspicious ownership invitation?**
+****What other IAM administrative operations occurred around the suspicious ownership invitation?****
 
 The objective was to identify related administrative activity that might provide additional context for the detected event.
 
@@ -550,7 +574,9 @@ The objective was to identify related administrative activity that might provide
 I removed the method-specific filter and retained the IAM policy permission filter:
 
 ```text
+
 protoPayload.authorizationInfo.permission="resourcemanager.projects.setIamPolicy"
+
 ```
 
 This broadened the search beyond `InsertProjectOwnershipInvite` while preserving the focus on IAM-policy-related administrative activity.
@@ -584,7 +610,9 @@ The expanded query revealed more activity than the detector-specific search.
 The results showed three methods associated with the project ownership invitation process:
 
 1. `CheckInvitationRequired` — an operation associated with determining whether an invitation is required.
+
 2. `InsertProjectOwnershipInviteForPantheon` — an additional ownership-invitation-related method.
+
 3. `InsertProjectOwnershipInvite` — the operation associated with the Event Threat Detection finding.
 
 The event names and close timing were consistent with related stages of an administrative invitation workflow.
@@ -606,9 +634,13 @@ This approach is useful in SOC investigations because security alerts often repr
 Examining surrounding events can help analysts:
 
 - Reconstruct activity preceding or accompanying the detected operation.
+
 - Identify additional methods associated with the same principal.
+
 - Compare related administrative activity across a narrow time window.
+
 - Determine whether further audit-log inspection is warranted.
+
 - Avoid treating a detection as an isolated event without surrounding context.
 
 #### Security Relevance
@@ -688,14 +720,23 @@ The following recommendations distinguish the lab's documented remediation workf
 For a comparable production finding, an analyst should:
 
 1. Validate the SCC finding category, severity, resource, and event timestamp.
+
 2. Identify the calling principal and the identity receiving permissions.
+
 3. Confirm the administrative operation using Cloud Audit Logs.
+
 4. Compare the change with approved IAM provisioning workflows.
+
 5. Determine whether an external invitation was accepted or access became effective.
+
 6. Review the recipient's subsequent authentication and administrative activity.
+
 7. Remove unauthorized or unnecessary privileged access.
+
 8. Verify the updated IAM policy and examine relevant policy-change audit events.
+
 9. Assess whether broader identity compromise or additional unauthorized changes occurred.
+
 10. Document evidence, containment decisions, and remaining investigative gaps.
 
 These recommendations extend beyond the preserved lab evidence and should not be interpreted as actions completed during the exercise.
@@ -706,40 +747,60 @@ The investigation was conducted in an authorized Google Cloud training project u
 
 The following limitations apply:
 
-1. **Simulated scenario:** The suspicious external Owner invitation was intentionally created for training. No real-world compromise was demonstrated.
-2. **Expected provisioning classification:** The earlier finding was assessed as expected activity using the documented Qwiklabs provisioning context. The screenshot alone would not prove authorization in another environment.
-3. **Detection scope:** Two high-severity findings were visible, but the preserved screenshots do not establish comprehensive detection coverage or the absence of other security events.
-4. **Invitation outcome:** The `InsertProjectOwnershipInvite` audit event establishes an invitation request, not independently verified acceptance or successful use of Owner permissions.
-5. **Identity attribution:** Cloud Audit Logs recorded the calling principal and source IP address. These fields do not independently identify the physical operator or establish malicious intent.
-6. **Remediation verification:** The IAM screenshot shows the external principal's Owner role in the access editor and the deletion control. It does not demonstrate a saved policy or final absence of the role.
-7. **Audit correlation:** The three independently identified IAM operations occurred close together and involved the same principal and project, but the screenshot does not expose complete payloads for every event.
-8. **Timestamp differences:** The SCC finding and corresponding Cloud Audit Log recorded timestamps approximately 20 seconds apart. The preserved evidence does not establish the exact reason for this difference.
-9. **Environment scope:** The investigation did not evaluate production identity governance, organization policies, long-term telemetry retention, or enterprise-wide access review controls.
+1. ****Simulated scenario:**** The suspicious external Owner invitation was intentionally created for training. No real-world compromise was demonstrated.
+
+2. ****Expected provisioning classification:**** The earlier finding was assessed as expected activity using the documented Qwiklabs provisioning context. The screenshot alone would not prove authorization in another environment.
+
+3. ****Detection scope:**** Two high-severity findings were visible, but the preserved screenshots do not establish comprehensive detection coverage or the absence of other security events.
+
+4. ****Invitation outcome:**** The `InsertProjectOwnershipInvite` audit event establishes an invitation request, not independently verified acceptance or successful use of Owner permissions.
+
+5. ****Identity attribution:**** Cloud Audit Logs recorded the calling principal and source IP address. These fields do not independently identify the physical operator or establish malicious intent.
+
+6. ****Remediation verification:**** The IAM screenshot shows the external principal's Owner role in the access editor and the deletion control. It does not demonstrate a saved policy or final absence of the role.
+
+7. ****Audit correlation:**** The three independently identified IAM operations occurred close together and involved the same principal and project, but the screenshot does not expose complete payloads for every event.
+
+8. ****Timestamp differences:**** The SCC finding and corresponding Cloud Audit Log recorded timestamps approximately 20 seconds apart. The preserved evidence does not establish the exact reason for this difference.
+
+9. ****Environment scope:**** The investigation did not evaluate production identity governance, organization policies, long-term telemetry retention, or enterprise-wide access review controls.
 
 ## Skills Demonstrated
 
 ### Cloud Threat Detection and SOC Triage
 
 - Investigated high-severity Google Cloud Event Threat Detection findings.
+
 - Analyzed IAM anomalous grant alerts in Security Command Center.
+
 - Differentiated expected provisioning activity from suspicious external access.
+
 - Examined alert severity, source properties, administrative methods, and affected identities.
+
 - Correlated cloud threat findings with underlying audit-log evidence.
 
 ### IAM and Cloud Security
 
 - Investigated project-level Owner role grants.
+
 - Identified an external identity targeted by a privileged access invitation.
+
 - Distinguished the calling principal from the receiving IAM member.
+
 - Reviewed an IAM access-remediation workflow.
+
 - Developed recommendations for least privilege and validation of effective access.
 
 ### Log Analysis and Incident Investigation
 
 - Applied Logs Explorer filters to isolate sensitive IAM operations.
+
 - Examined Cloud Audit Log fields for actor, recipient, source IP, resource, and timestamp.
+
 - Independently broadened a method-specific search to identify related IAM policy operations.
+
 - Reconstructed a short administrative activity sequence from three audit records.
+
 - Documented evidence limitations and avoided unsupported compromise or remediation claims.
 
 ## Conclusion
