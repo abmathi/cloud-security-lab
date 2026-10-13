@@ -444,3 +444,89 @@ Logs Explorer returned one matching administrative event containing the recorded
 The audit record provided independent supporting evidence for the high-severity Event Threat Detection finding.
 
 The next investigation phase examines the IAM access-remediation evidence associated with the external identity.
+
+### Finding 5 — External IAM Owner Access Remediation
+
+#### Investigation Context
+
+After correlating the high-severity Event Threat Detection finding with its underlying Cloud Audit Log, I proceeded to the IAM remediation phase.
+
+The investigation identified an external Gmail identity that had been invited to receive project-level Owner access through a training-account administrative operation.
+
+The objective was to remove the external principal's broad permissions and address the suspicious access configuration introduced during the exercise.
+
+#### IAM Remediation Procedure
+
+I navigated to Google Cloud IAM & Admin and located the external principal:
+
+`bad.actor.demo@gmail.com`
+
+I opened the principal's access editor and reviewed the assigned role.
+
+The IAM interface displayed the following configuration:
+
+| IAM Attribute | Observed Value |
+| --- | --- |
+| Principal | `bad.actor.demo@gmail.com` |
+| Resource scope | Google Cloud training project |
+| Role displayed | Basic Owner |
+| Remediation interface | Edit access |
+| Available action | Delete role |
+| Save control | Available |
+| Final role-removal state | Not visible in the preserved screenshot |
+
+![External principal Owner role removal](evidence/07-external-owner-role-removal.png)
+
+*Figure 7 — Google Cloud IAM access editor showing the external test principal assigned the Basic Owner role, with the role-deletion control highlighted. The screenshot captures the remediation workflow before final confirmation.*
+
+The Owner role provides broad administrative access within its applicable resource scope.
+
+Because the external account did not belong to the expected Qwiklabs training identities, the role assignment was treated as suspicious within the exercise.
+
+#### Remediation Action
+
+The lab remediation procedure required:
+
+1. Opening IAM & Admin → IAM.
+2. Locating the external principal.
+3. Opening the principal's access editor.
+4. Selecting the deletion control for the Owner role.
+5. Saving the updated IAM policy.
+
+The screenshot captures the access editor and identifies the Owner role targeted for deletion.
+
+The original lab notes document the required role-removal workflow, including saving the change.
+
+However, the preserved screenshot does not independently verify that the updated policy was saved or that the principal disappeared from the IAM access list.
+
+#### Security Relevance
+
+Removing unauthorized or unnecessary project-level Owner access is an important containment and remediation action.
+
+An external principal with effective Owner access may possess extensive permissions to administer project resources and modify security-sensitive configurations.
+
+In a production incident, analysts should determine whether privileged access became effective, whether the identity performed additional administrative actions, and whether associated credentials or sessions require further investigation.
+
+Removal of a role assignment is only one part of a broader response to suspected identity compromise.
+
+In this authorized training scenario, the suspicious grant was deliberately created and the remediation workflow was prescribed by the exercise.
+
+#### Remediation Verification Limitations
+
+The screenshot confirms the affected principal, the displayed Owner role, and the role-removal interface.
+
+It does not independently demonstrate a successfully saved IAM policy or the final absence of the external principal's Owner grant.
+
+A stronger production verification would include reviewing the updated IAM policy, checking relevant `SetIamPolicy` audit events, and validating the principal's effective access.
+
+The following independent investigation examines broader IAM policy activity, but it should not be treated as conclusive proof of final role removal without an explicit record of the completed change.
+
+#### Analyst Assessment
+
+**Assessment: External Owner grant identified and role-removal workflow documented; final IAM access state not independently verified.**
+
+The evidence established the principal and broad role targeted for remediation.
+
+The lab instructions documented the intended removal procedure, while the screenshot captured the edit stage.
+
+The investigation supports the remediation decision, but the preserved evidence does not independently establish completion of the IAM policy update.
