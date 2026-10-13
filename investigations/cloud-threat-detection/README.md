@@ -357,3 +357,90 @@ The source properties confirmed the invitation recipient and the recorded acting
 The finding provided sufficient context to prioritize further audit-log review and access remediation.
 
 The next phase investigates the underlying Cloud Audit Log record to corroborate the reported IAM operation.
+
+### Finding 4 — Cloud Audit Log Investigation of External Ownership Invitation
+
+#### Investigation Context
+
+After identifying the suspicious external project ownership invitation in Security Command Center, I investigated the corresponding administrative activity in Google Cloud Logs Explorer.
+
+The objective was to corroborate the Event Threat Detection finding using the underlying Cloud Audit Log and identify the recorded actor, requested recipient, source IP address, and administrative operation.
+
+#### Logs Explorer Query
+
+I used the following Logs Explorer query to isolate project ownership invitation events:
+
+```text
+protoPayload.authorizationInfo.permission="resourcemanager.projects.setIamPolicy"
+protoPayload.methodName="InsertProjectOwnershipInvite"
+```
+
+The query filtered audit records by the relevant IAM policy permission and administrative method.
+
+The preserved screenshot shows one matching log entry within the selected time window.
+
+#### Observed Audit Event
+
+The expanded event contained the following fields:
+
+| Audit Field | Observed Value |
+| --- | --- |
+| Log type | Admin Activity |
+| Timestamp (UTC) | `2026-09-21T23:26:32.710685Z` |
+| Method | `InsertProjectOwnershipInvite` |
+| Service | `cloudresourcemanager.googleapis.com` |
+| Recorded principal | Qwiklabs student training account |
+| Caller IP | `98.177.14.130` |
+| Request member | `user:bad.actor.demo@gmail.com` |
+| Resource | Google Cloud training project |
+| Severity | Notice |
+
+![External ownership invitation Cloud Audit Log](evidence/06-external-owner-invitation-audit-log.png)
+
+*Figure 6 — Expanded Cloud Audit Log for the `InsertProjectOwnershipInvite` operation, including the calling principal, external Gmail recipient, caller IP address, and event timestamp.*
+
+The `protoPayload.authenticationInfo.principalEmail` field identified the training account that initiated the request.
+
+The `protoPayload.request.member` field identified the external Gmail identity targeted by the ownership invitation.
+
+The `protoPayload.requestMetadata.callerIp` field recorded the source IP address associated with the administrative request.
+
+The user-agent field also provided request-client context. This information may be useful when comparing administrative actions with expected workflows, but it does not independently establish who physically operated the client.
+
+#### Correlation with Security Command Center
+
+The Cloud Audit Log corroborated several elements of the Event Threat Detection finding.
+
+| Investigation Attribute | SCC Finding | Cloud Audit Log |
+| --- | --- | --- |
+| Administrative method | `InsertProjectOwnershipInvite` | `InsertProjectOwnershipInvite` |
+| Calling principal | Qwiklabs student account | Qwiklabs student account |
+| Invited identity | External Gmail account | External Gmail account |
+| Caller IP | `98.177.14.130` | `98.177.14.130` |
+| Event time (UTC) | Approximately 23:26:52 | 23:26:32 |
+
+The shared method, principal, recipient, and caller IP supported correlation between the detection and its underlying administrative activity.
+
+The timestamps were approximately 20 seconds apart. This is consistent with the SCC finding and audit log recording different stages of the activity or detection process, although the preserved evidence does not establish the exact cause of that difference.
+
+#### Security Relevance
+
+An external project ownership invitation can indicate an attempt to introduce privileged access into a cloud environment.
+
+In a production investigation, an analyst would examine whether the recipient was authorized, whether the invitation was accepted, and whether any permissions became effective.
+
+The source IP address and user agent could also be compared with authentication records, change approvals, and normal administrative behavior.
+
+However, the observed audit event established an ownership invitation request. It did not independently establish successful invitation acceptance, subsequent authentication, or misuse of project resources.
+
+The operation was deliberately performed as part of the authorized training scenario.
+
+#### Analyst Assessment
+
+**Assessment: External project ownership invitation corroborated in Cloud Audit Logs.**
+
+Logs Explorer returned one matching administrative event containing the recorded calling principal, external recipient, caller IP address, and ownership invitation method.
+
+The audit record provided independent supporting evidence for the high-severity Event Threat Detection finding.
+
+The next investigation phase examines the IAM access-remediation evidence associated with the external identity.
