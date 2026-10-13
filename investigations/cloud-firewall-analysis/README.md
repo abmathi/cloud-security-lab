@@ -316,3 +316,138 @@ Under Google Cloud VPC firewall evaluation behavior, the deny rule takes precede
 The screenshot established the intended firewall configuration, but actual connection denial required supporting traffic evidence.
 
 The next phase examines the firewall log records generated during the HTTP connection test.
+
+### Finding 3 — Denied Connection Investigation and Firewall Rule Attribution
+
+#### Investigation Context
+
+After reviewing the overlapping HTTP allow and deny firewall rules, I investigated the corresponding firewall log events in Google Cloud Logs Explorer.
+
+The objective was to determine whether HTTP connection attempts to the Cymbal Bank web server were denied and identify the firewall rule responsible for the observed action.
+
+The previous configuration review identified two ingress rules targeting the `http-server` network tag:
+
+- `allow-http-ssh`, permitting TCP ports `22` and `80`.
+- `deny-http`, denying TCP port `80`.
+
+Both rules used priority `1000`, making the deny action relevant when traffic matched both rules.
+
+#### Firewall Log Investigation
+
+I opened Cloud Logging → Logs Explorer and queried the VPC firewall logs.
+
+The preserved query used the following log source filters:
+
+```text
+resource.type="gce_subnetwork"
+log_name="projects/qwiklabs-gcp-03-e4eca9aa31dd/logs/compute.googleapis.com%2Ffirewall"
+```
+
+An additional source-IP condition was visible, but its value was redacted in the screenshot.
+
+The query returned 32 results in the displayed time range.
+
+Multiple visible event summaries contained the disposition:
+
+`DENIED`
+
+I expanded a selected log entry to examine the connection metadata and firewall action.
+
+#### Denied HTTP Connection
+
+The selected log event contained the following fields:
+
+| Log Attribute | Observed Value |
+| --- | --- |
+| Log type | Firewall Rules Logging |
+| Resource type | `gce_subnetwork` |
+| Event timestamp | September 21, 2026, 22:35:29.538, as displayed |
+| Destination instance | `web-server` |
+| Instance region | `us-central1` |
+| Instance zone | `us-central1-a` |
+| Destination IP | `10.1.3.2` |
+| Destination port | `80` |
+| Protocol | TCP (`6`) |
+| Source IP | Redacted |
+| Source port | `53229` |
+| Connection disposition | `DENIED` |
+
+![Denied HTTP connection in firewall logs](evidence/03-denied-http-firewall-log.png)
+
+*Figure 3 — Firewall Rules Logging showing a TCP connection to `10.1.3.2:80` with disposition `DENIED`, associated with the `web-server` instance.*
+
+The destination port identified the attempted connection as TCP traffic directed toward the web server's HTTP service.
+
+The `disposition` value provided explicit evidence that the firewall denied the selected connection.
+
+Unlike the earlier VPC Flow Log, this record included a firewall enforcement outcome.
+
+#### Firewall Rule Attribution
+
+I expanded the `rule_details` object within the same log event.
+
+The preserved fields identified the following rule attributes:
+
+| Rule Attribute | Observed Value |
+| --- | --- |
+| Action | `DENY` |
+| Direction | `INGRESS` |
+| Priority | `1000` |
+| Rule reference | `network:vpc-net/firewall:deny-http` |
+| Source-range details | Present but not expanded |
+| Target-tag details | Present but not expanded |
+| Port/protocol details | Present but not expanded |
+
+![Firewall rule attribution for denied HTTP connection](evidence/04-deny-http-firewall-rule-attribution.png)
+
+*Figure 4 — Expanded firewall log details identifying the `deny-http` ingress rule at priority `1000` as responsible for the selected denied HTTP connection.*
+
+The `rule_details.reference` field identified `deny-http` in the `vpc-net` network.
+
+This linked the observed connection denial to the firewall rule examined in Finding 2.
+
+The log event also confirmed that the enforcing rule used priority `1000` and applied to ingress traffic.
+
+Although the rule details contained nested source-range, target-tag, and protocol fields, the screenshot did not expand their contents.
+
+Their exact values should therefore be established using the configuration instructions or separate evidence rather than reconstructed from the log.
+
+#### Connection Between Rule Configuration and Observed Behavior
+
+Finding 2 established that the `deny-http` rule targeted TCP port `80` with the same priority as the existing HTTP allow rule.
+
+The firewall log then recorded a TCP connection to port `80` with the disposition `DENIED`.
+
+The expanded rule details attributed the action to:
+
+`network:vpc-net/firewall:deny-http`
+
+Together, these observations provided evidence that the deny rule was actively evaluating and blocking the selected HTTP connection.
+
+The evidence did not establish that every possible HTTP connection or network path was blocked.
+
+It also did not independently verify application-level response behavior for all attempted connections.
+
+#### Security Relevance
+
+Firewall Rules Logging can help analysts validate network access controls by recording connection metadata, firewall dispositions, and rule attribution.
+
+This is useful when troubleshooting overlapping rules or confirming that a new restriction affects the intended traffic.
+
+The `DENIED` disposition demonstrates an enforcement result for a particular connection.
+
+The rule reference provides additional context by identifying which rule produced that result.
+
+However, log events represent observed connections and should not be interpreted as a complete inventory of all effective network access controls.
+
+#### Analyst Assessment
+
+**Assessment: HTTP traffic to the `web-server` instance was denied by the `deny-http` firewall rule.**
+
+The selected firewall log recorded a TCP connection to destination IP `10.1.3.2` on port `80` with disposition `DENIED`.
+
+The expanded rule details identified an ingress Deny action at priority `1000`, attributed to `network:vpc-net/firewall:deny-http`.
+
+These observations directly connected the configured HTTP deny rule to a recorded enforcement outcome.
+
+The next phase independently compares allowed and denied HTTP events to evaluate how the observed traffic behavior changed during the exercise.
