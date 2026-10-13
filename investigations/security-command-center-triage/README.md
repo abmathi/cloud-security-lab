@@ -134,3 +134,86 @@ The initial triage confirmed that Security Command Center detected the relevant 
 The available evidence supported further investigation of affected service accounts, key status, associated permissions, and remediation options.
 
 The next phase examines the details of a selected finding to determine the affected resource and recommended corrective action.
+
+### Finding 2 — Service Account Credential Risk Analysis
+
+#### Investigation Context
+
+After identifying three user-managed service account key findings, I opened the details of a recent Security Command Center finding to investigate the affected resource.
+
+The objective was to determine what Security Command Center detected, identify the associated service account, assess the severity, and review the recommended corrective action.
+
+#### Finding Details
+
+The Security Command Center summary identified the following information:
+
+| Field | Observed Value |
+| --- | --- |
+| Finding category | `User managed service account key` |
+| Finding state | Active |
+| Severity | Medium |
+| Event time | September 21, 2026, 3:58:51 PM GMT-7 |
+| Creation time | September 21, 2026, 3:58:52 PM GMT-7 |
+| Resource type | `google.iam.ServiceAccountKey` |
+| Affected service account | `test-account` |
+| Cloud provider | Google Cloud |
+| Security contacts | None listed |
+
+![Security Command Center user-managed service account key finding](evidence/02-scc-finding-details.png)
+
+*Figure 2 — Security Command Center finding details identifying an active, medium-severity user-managed service account key associated with the test service account. The panel displays the affected credential resource and recommended corrective actions.*
+
+The affected resource was a user-managed service account key associated with the test identity created earlier in the lab.
+
+Security Command Center described the concern as the presence of a user-managed key that could be leaked.
+
+The finding did not indicate that a credential leak, attacker authentication, or account compromise had occurred.
+
+#### Risk Analysis
+
+User-managed service account keys are long-lived credentials unless explicitly rotated, revoked, or deleted.
+
+Because the private key material can be exported, user-managed keys introduce risks associated with insecure storage, accidental disclosure, credential reuse, and unauthorized access if compromised.
+
+The potential impact depends partly on the privileges granted to the service account.
+
+In this exercise, the test service account had been assigned project-level Owner permissions.
+
+This combination is important because a compromised credential associated with a highly privileged service account could provide extensive administrative capabilities within the project's permission boundaries.
+
+However, the screenshot only confirms the presence of a user-managed key and the associated finding. It does not establish that the key was compromised or that its permissions were abused.
+
+#### Recommended Corrective Action
+
+The SCC finding provided two next steps:
+
+1. Open the affected service account's details page.
+2. Delete user-managed service account keys that are not used by any application.
+
+This recommendation addresses the existence of unnecessary user-managed credential material.
+
+Before deleting a key in a production environment, an analyst should identify dependent workloads and coordinate with the relevant service owners to prevent unintended service disruption.
+
+Where possible, applications should use short-lived credentials or supported workload identity mechanisms rather than downloadable private keys.
+
+#### False Positive Classification
+
+The lab scenario characterized this finding as a false positive because the service account and key were intentionally created for authorized testing.
+
+That classification describes the benign context of the activity.
+
+It does not mean that Security Command Center incorrectly identified the existence of the user-managed key.
+
+The finding accurately represented a configuration risk introduced during the exercise.
+
+An analyst should therefore distinguish between a finding that is technically accurate and activity that is not associated with an actual security incident.
+
+#### Analyst Assessment
+
+**Assessment: Active, medium-severity user-managed service account key finding confirmed for the test service account.**
+
+The investigation identified the affected credential resource, documented the associated risk, and reviewed the remediation guidance provided by Security Command Center.
+
+The evidence supports a credential-management concern rather than a confirmed security compromise.
+
+The next investigation phase verifies whether the unnecessary user-managed key was removed from the service account.
