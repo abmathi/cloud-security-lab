@@ -78,3 +78,59 @@ The report documents four stages:
 4. Independent IAM Excessive Privilege Assessment
 
 The final sections will address security implications, remediation recommendations, evidence limitations, skills demonstrated, and supporting screenshots.
+
+## Investigation Findings
+
+### Finding 1 — Security Command Center Finding Identification
+
+#### Investigation Context
+
+The first phase involved reviewing Google Cloud Security Command Center (SCC) for findings associated with user-managed service account authentication keys.
+
+The training scenario intentionally introduced a user-managed JSON key for a test service account. The objective was to determine whether Security Command Center identified the resulting configuration risk.
+
+#### Security Command Center Findings Review
+
+I opened Security Command Center, navigated to the Findings interface, and filtered the findings list by the following category:
+
+`User managed service account key`
+
+The interface displayed three matching findings within the selected seven-day window.
+
+| Finding | Category | Severity | Event Date |
+| --- | --- | --- | --- |
+| 1 | User managed service account key | Medium | September 21, 2026 |
+| 2 | User managed service account key | Medium | September 21, 2026 |
+| 3 | User managed service account key | Medium | September 14, 2026 |
+
+![Security Command Center service account key findings](evidence/01-scc-service-account-findings.png)
+
+*Figure 1 — Google Cloud Security Command Center displaying three medium-severity findings in the User managed service account key category, filtered within the selected seven-day window.*
+
+Each displayed finding had an attack exposure score of `0`.
+
+The list also showed the findings as unmuted. The visible records included event and creation timestamps, allowing the analyst to distinguish recently observed findings from older records.
+
+The list alone did not establish whether the three findings involved the same service account, separate resources, or repeated observations of similar configurations.
+
+#### Initial Triage Assessment
+
+The category indicated the presence of user-managed service account keys, which can introduce credential-management risks.
+
+Unlike automatically managed credentials, exported user-managed keys can potentially be copied, stored insecurely, or retained beyond their intended lifetime.
+
+An exposed key may allow someone possessing it to authenticate as the associated service account, subject to the account's effective permissions and other applicable controls.
+
+However, the presence of a user-managed key does not independently establish credential compromise.
+
+Similarly, an attack exposure score of `0` does not prove that the underlying configuration is harmless or that the associated identity cannot be abused.
+
+#### Analyst Assessment
+
+**Assessment: Three medium-severity user-managed service account key findings identified in Security Command Center.**
+
+The initial triage confirmed that Security Command Center detected the relevant credential-management category.
+
+The available evidence supported further investigation of affected service accounts, key status, associated permissions, and remediation options.
+
+The next phase examines the details of a selected finding to determine the affected resource and recommended corrective action.
