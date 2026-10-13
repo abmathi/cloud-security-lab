@@ -413,3 +413,101 @@ The visible results provided timestamps, recorded principal information, and ass
 The investigation demonstrated how BigQuery can support audit-event filtering and timeline reconstruction.
 
 The records provide evidence of logged deletion operations, but additional audit fields and resource-state evidence would be required to establish their complete outcomes and authorization context.
+
+### Finding 5 — Independent Cross-Service Administrative Activity Correlation
+
+#### Investigation Context
+
+After completing the guided Cloud Audit Logs investigations, I independently developed a BigQuery query to correlate destructive administrative operations across multiple Google Cloud services.
+
+The guided exercises examined Compute Engine and Cloud Storage deletion events separately.
+
+The independent investigation addressed a broader security question:
+
+**Did the same recorded identity perform multiple destructive cloud-resource operations within a short period?**
+
+The objective was to reconstruct an administrative activity timeline using exported audit records rather than investigate each cloud service in isolation.
+
+#### Cross-Service BigQuery Query
+
+I created a SQL query that selected a common set of investigation fields and included both Compute Engine and Cloud Storage deletion methods.
+
+```sql
+SELECT
+  timestamp,
+  protopayload_auditlog.authenticationInfo.principalEmail AS actor,
+  protopayload_auditlog.methodName AS action,
+  protopayload_auditlog.resourceName AS resource
+FROM
+  `auditlogs_dataset.cloudaudit_googleapis_com_activity_*`
+WHERE
+  PARSE_DATE('%Y%m%d', _TABLE_SUFFIX) BETWEEN
+    DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+    AND CURRENT_DATE()
+  AND protopayload_auditlog.methodName IN (
+    "v1.compute.instances.delete",
+    "storage.buckets.delete"
+  )
+ORDER BY
+  timestamp ASC;
+```
+
+The query made two important changes from the guided investigations.
+
+First, it removed the restriction to a single resource type, allowing the query to retrieve operations from multiple Google Cloud services.
+
+Second, it used an `IN` clause to select both deletion methods and ordered the results chronologically.
+
+The field aliases `actor`, `action`, and `resource` made the resulting records easier to interpret as an administrative activity timeline.
+
+#### Correlated Activity Timeline
+
+BigQuery returned three matching records from September 21, 2026.
+
+| Timestamp (UTC) | Action | Resource |
+| --- | --- | --- |
+| `22:26:42.647691` | `v1.compute.instances.delete` | Compute Engine instance `default-us-vm` |
+| `22:27:15.047019` | `storage.buckets.delete` | Cloud Storage bucket |
+| `22:27:19.107056` | `storage.buckets.delete` | Cloud Storage bucket |
+
+![Cross-service administrative activity timeline](evidence/05-cross-service-activity-timeline.png)
+
+*Figure 5 — Independent BigQuery query correlating Compute Engine instance deletion and Cloud Storage bucket deletion operations. The results show three events attributed to the same recorded principal within approximately 37 seconds.*
+
+All three records contained the same authenticated training-account identity in the `actor` field.
+
+The first record identified a Compute Engine instance deletion operation. The subsequent two records identified Cloud Storage bucket deletion operations.
+
+The events occurred within approximately 37 seconds of one another.
+
+#### Cross-Service Correlation
+
+The timeline revealed a sequence of administrative actions that would have been less apparent when examining each service independently.
+
+The combination of a shared recorded principal, short time interval, and destructive operation methods provided a useful basis for further security investigation.
+
+The query demonstrated how different cloud service audit records can be normalized into common fields and analyzed together.
+
+However, the observed timeline does not independently establish that the operations were unauthorized or malicious.
+
+The activity was intentionally generated as part of the training scenario. Additional context, such as access approvals, authentication history, IAM changes, and resource-state verification, would be required to assess the legitimacy and ultimate effects of similar activity in a production environment.
+
+#### Security Relevance
+
+Cross-service audit correlation is useful during investigations involving potential cloud account compromise, unauthorized administrative changes, and destructive resource activity.
+
+An analyst examining multiple deletion operations under one identity could use the timeline to determine which resources require further review and what additional telemetry should be collected.
+
+This technique supports cloud incident reconstruction by reducing dependence on separate service-specific queries.
+
+It does not establish an intrusion or prove successful resource destruction solely from matching operation names.
+
+#### Analyst Assessment
+
+**Assessment: Three destructive administrative operation records independently correlated across Compute Engine and Cloud Storage.**
+
+The investigation identified one VM deletion event and two bucket deletion events associated with the same recorded training-account principal.
+
+The events occurred within approximately 37 seconds and were reconstructed into a chronological BigQuery activity timeline.
+
+The result demonstrated practical cloud audit-log correlation and SQL-based incident investigation without assuming malicious intent or independently verified resource-deletion outcomes.
