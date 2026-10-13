@@ -8,7 +8,7 @@ The exercise placed me in the role of a junior security analyst supporting incid
 
 Using Google Cloud Security Command Center and related cloud services, I investigated configuration findings affecting Compute Engine, Cloud Storage, and VPC firewall rules.
 
-The response workflow included recovering a virtual machine from a pre-incident snapshot, restricting public Cloud Storage access, reducing unnecessary network exposure, enabling firewall rule logging, and reviewing PCI DSS 3.2.1 compliance findings.
+The documented response workflow included a snapshot-based virtual machine replacement, restricting public Cloud Storage access, reducing unnecessary network exposure, enabling firewall rule logging, and reviewing PCI DSS 3.2.1 compliance findings.
 
 The objective was to demonstrate a structured approach to identifying cloud security weaknesses, prioritizing remediation, and evaluating the observable results of corrective actions.
 
@@ -42,8 +42,8 @@ The scenario's breach narrative provides investigation context. The screenshots 
 3. Review relevant PCI DSS 3.2.1 findings.
 4. Document recovery of the affected Compute Engine virtual machine.
 5. Evaluate remediation of public Cloud Storage access.
-6. Restrict SSH administration using the Google Cloud IAP source range.
-7. Document removal of unnecessary default firewall rules and enable logging.
+6. Assess the intended IAP-based SSH restriction and verify the actual firewall action.
+7. Assess the final visible firewall-rule list and logging configuration.
 8. Compare compliance findings before and after remediation.
 9. Identify unresolved issues and limitations in the preserved evidence.
 
@@ -75,23 +75,24 @@ The investigation was performed in an authorized, temporary training project.
 
 The data breach was part of the fictional exercise scenario. The preserved screenshots do not independently establish real-world compromise, malware execution, or data theft.
 
-The report will distinguish between remediation steps described in the lab instructions and final configurations directly supported by screenshots.
+The report distinguishes between remediation steps described in the lab instructions and final configurations directly supported by screenshots.
 
 A restored VM cannot be declared malware-free solely because it was created from a snapshot. Similarly, a reduction in compliance findings does not independently demonstrate full regulatory compliance.
 
 ## Investigation Organization
 
-The report will document the following stages:
+The report documents eight findings:
 
 1. Initial Cloud Security Posture Assessment
-2. PCI DSS Compliance Findings Review
-3. Compute Engine Vulnerability Assessment and Recovery
-4. Cloud Storage Access Remediation
-5. Restricted SSH Access Configuration
-6. Firewall Hardening and Logging
-7. Post-Remediation Compliance Verification
+2. Initial PCI DSS Compliance Assessment
+3. Detailed Compute Engine and Firewall Security Findings
+4. Compute Engine Recovery and VM Hardening
+5. Cloud Storage Public Access Remediation
+6. Restricted SSH Access and Firewall Rule Analysis
+7. Firewall Hardening and Logging Verification
+8. Post-Remediation PCI DSS Compliance Assessment
 
-The final sections will summarize security implications, remediation outcomes, evidence limitations, skills demonstrated, and supporting evidence.
+The final sections summarize security implications, remediation outcomes, evidence limitations, skills demonstrated, and supporting evidence.
 
 ## Investigation Findings
 
@@ -107,7 +108,7 @@ The objective was to identify the affected resource categories, evaluate the sev
 
 #### Security Command Center Risk Overview
 
-I opened Security Command Center and reviewed the **Misconfigurations** dashboard using the **By resource type** view.
+I opened Security Command Center and reviewed the ****Misconfigurations**** dashboard using the ****By resource type**** view.
 
 The dashboard displayed the following findings:
 
@@ -121,11 +122,11 @@ The dashboard displayed the following findings:
 | `compute.Project` | 0 | 0 | 1 | 0 |
 | `ServiceAccountKey` | 0 | 0 | 1 | 0 |
 | Subnetwork | 0 | 0 | 0 | 48 |
-| **Total** | **0** | **4** | **14** | **58** |
+| ****Total**** | ****0**** | ****4**** | ****14**** | ****58**** |
 
 ![Initial SCC misconfiguration overview](evidence/01-initial-scc-misconfiguration-overview.png)
 
-*Figure 1 — Google Cloud Security Command Center misconfigurations grouped by resource type, showing High-severity findings affecting firewall rules, Compute Engine instances, and Cloud Storage buckets.*
+**Figure 1 — Google Cloud Security Command Center misconfigurations grouped by resource type, showing High-severity findings affecting firewall rules, Compute Engine instances, and Cloud Storage buckets.**
 
 The resource-type breakdown contained no Critical findings but showed four High-severity misconfiguration findings.
 
@@ -199,7 +200,7 @@ The report showed the following non-compliant controls:
 
 ![Initial PCI DSS 3.2.1 compliance report](evidence/02-initial-pci-dss-compliance-report.png)
 
-*Figure 2 — Initial Security Command Center PCI DSS 3.2.1 report showing five non-compliant controls and their associated finding counts before remediation.*
+**Figure 2 — Initial Security Command Center PCI DSS 3.2.1 report showing five non-compliant controls and their associated finding counts before remediation.**
 
 The report also displayed several controls marked Compliant with zero associated findings.
 
@@ -232,11 +233,11 @@ Not every identified weakness was addressed during the exercise.
 
 Based on the simulated incident scenario and the security weaknesses described in the lab, I prioritized the following areas:
 
-1. **Compute Engine recovery:** Review the affected virtual machine and follow the prescribed snapshot-based restoration procedure.
-2. **Cloud Storage security:** Remove unnecessary public access and strengthen bucket-level authorization controls.
-3. **Network access restrictions:** Replace overly permissive administrative-access rules with restricted SSH access.
-4. **Firewall visibility:** Enable appropriate firewall rule logging.
-5. **Post-remediation assessment:** Reevaluate the compliance report to determine whether relevant security findings changed.
+1. ****Compute Engine recovery:**** Review the affected virtual machine and follow the prescribed snapshot-based restoration procedure.
+2. ****Cloud Storage security:**** Remove unnecessary public access and strengthen bucket-level authorization controls.
+3. ****Network access restrictions:**** Replace overly permissive administrative-access rules with restricted SSH access.
+4. ****Firewall visibility:**** Enable appropriate firewall rule logging.
+5. ****Post-remediation assessment:**** Reevaluate the compliance report to determine whether relevant security findings changed.
 
 These priorities were guided by the lab scenario and the initial Security Command Center findings.
 
@@ -284,7 +285,7 @@ The Security Command Center findings list displayed five records associated with
 
 ![Compute Engine security findings](evidence/03-compute-engine-security-findings.png)
 
-*Figure 3 — Security Command Center showing five findings associated with the `cc-app-01` Compute Engine instance, including public IP exposure, service account configuration, API access, Secure Boot, and a low-severity threat finding.*
+**Figure 3 — Security Command Center showing five findings associated with the `cc-app-01` Compute Engine instance, including public IP exposure, service account configuration, API access, Secure Boot, and a low-severity threat finding.**
 
 These findings identified several potential security concerns.
 
@@ -311,7 +312,7 @@ The second findings view displayed six records associated with existing VPC fire
 
 ![VPC firewall security findings](evidence/04-vpc-firewall-security-findings.png)
 
-*Figure 4 — Security Command Center showing six findings involving open SSH/RDP ports and disabled firewall rule logging.*
+**Figure 4 — Security Command Center showing six findings involving open SSH/RDP ports and disabled firewall rule logging.**
 
 The Open SSH and Open RDP findings indicated potentially excessive administrative-access exposure through the corresponding firewall rules.
 
@@ -401,7 +402,7 @@ The Compute Engine details page displayed the following configuration:
 
 ![Replacement Compute Engine VM details](evidence/05-replacement-compute-engine-vm.png)
 
-*Figure 5 — Compute Engine details page showing the replacement `cc-app-02` instance running in `us-west1-b`. The screenshot verifies the replacement VM's existence and basic configuration, but does not independently establish its snapshot source or all security settings.*
+**Figure 5 — Compute Engine details page showing the replacement `cc-app-02` instance running in `us-west1-b`. The screenshot verifies the replacement VM's existence and basic configuration, but does not independently establish its snapshot source or all security settings.**
 
 The screenshot confirms that the replacement instance was created and running.
 
@@ -473,7 +474,7 @@ The initial screenshot displayed the following configuration:
 
 ![Cloud Storage public access before remediation](evidence/06-cloud-storage-public-access-before.png)
 
-*Figure 6 — Initial Cloud Storage bucket permissions showing public access granted to public principals and fine-grained object-level ACLs enabled.*
+**Figure 6 — Initial Cloud Storage bucket permissions showing public access granted to public principals and fine-grained object-level ACLs enabled.**
 
 The bucket's public access status indicated that public principals had been granted access.
 
@@ -515,13 +516,13 @@ The second screenshot showed the same bucket with updated security settings.
 
 ![Cloud Storage public access after remediation](evidence/07-cloud-storage-public-access-after.png)
 
-*Figure 7 — Post-remediation permissions showing the bucket as Not public, Public Access Prevention enabled, and uniform bucket-level access active.*
+**Figure 7 — Post-remediation permissions showing the bucket as Not public, Public Access Prevention enabled, and uniform bucket-level access active.**
 
-The updated Permissions view displayed **Not public**.
+The updated Permissions view displayed ****Not public****.
 
-The presence of the **Remove Public Access Prevention** option indicated that Public Access Prevention was enabled.
+The presence of the ****Remove Public Access Prevention**** option indicated that Public Access Prevention was enabled.
 
-The Access control panel also displayed **Uniform: No object-level ACLs enabled**.
+The Access control panel also displayed ****Uniform: No object-level ACLs enabled****.
 
 These observations provide direct visual evidence that the bucket's public access and access-control configuration changed during the exercise.
 
@@ -574,7 +575,7 @@ The preserved screenshot showed the following settings:
 | Rule name | `limit-ports` |
 | VPC network | `default` |
 | Direction | Ingress |
-| Action on match | **Deny** |
+| Action on match | ****Deny**** |
 | Priority | `1000` |
 | Source IP range | `35.235.240.0/20` |
 | Target network tag | `cc` |
@@ -584,7 +585,7 @@ The preserved screenshot showed the following settings:
 
 ![SSH firewall rule configuration](evidence/08-ssh-firewall-rule-configuration.png)
 
-*Figure 8 — Google Cloud VPC firewall rule `limit-ports` showing an enabled ingress Deny rule for TCP port 22 from `35.235.240.0/20`, targeting instances with the `cc` network tag and with logging enabled.*
+**Figure 8 — Google Cloud VPC firewall rule `limit-ports` showing an enabled ingress Deny rule for TCP port 22 from `35.235.240.0/20`, targeting instances with the `cc` network tag and with logging enabled.**
 
 The firewall rule was enabled and scoped to instances carrying the `cc` network tag.
 
@@ -592,7 +593,7 @@ It matched incoming TCP port 22 traffic originating from the specified source ra
 
 The source range `35.235.240.0/20` corresponds to Google Cloud IAP TCP forwarding.
 
-However, the configured action was **Deny**.
+However, the configured action was ****Deny****.
 
 #### Security Configuration Assessment
 
@@ -615,7 +616,7 @@ A complete exposure assessment would therefore require reviewing the effective f
 For a production VM requiring SSH administration through IAP, an appropriate configuration would typically include:
 
 1. Removing or disabling unnecessarily broad SSH ingress rules.
-2. Creating an ingress **allow** rule for TCP port 22 from the IAP TCP forwarding range.
+2. Creating an ingress ****allow**** rule for TCP port 22 from the IAP TCP forwarding range.
 3. Restricting that rule to the intended VM or target service account.
 4. Granting only authorized administrators the necessary IAP access permissions.
 5. Ensuring other network paths do not unintentionally expose SSH.
@@ -640,7 +641,7 @@ Therefore, the evidence supports the configured logging state but does not indep
 
 The preserved configuration demonstrated a scoped ingress rule targeting TCP port 22 and instances with the `cc` network tag.
 
-However, the rule used the **Deny** action for the IAP TCP forwarding range.
+However, the rule used the ****Deny**** action for the IAP TCP forwarding range.
 
 As a result, the screenshot does not establish that IAP-based SSH access was enabled or that the intended restricted-access configuration was successfully achieved.
 
@@ -677,7 +678,7 @@ The post-remediation screenshot displayed only two VPC firewall rules in the cur
 
 ![Final firewall rules and logging configuration](evidence/09-final-firewall-rules-and-logging.png)
 
-*Figure 9 — Google Cloud VPC firewall rules showing `limit-ports` and `default-allow-internal` with logging enabled. The custom SSH rule uses the Deny action, and the training account lacks permission to inspect inherited firewall policies.*
+**Figure 9 — Google Cloud VPC firewall rules showing `limit-ports` and `default-allow-internal` with logging enabled. The custom SSH rule uses the Deny action, and the training account lacks permission to inspect inherited firewall policies.**
 
 The three default rules targeted for deletion were absent from the displayed list.
 
@@ -687,9 +688,9 @@ However, the screenshot did not provide a complete effective-policy analysis, in
 
 #### Firewall Logging Verification
 
-Both remaining rules displayed logging as **On**.
+Both remaining rules displayed logging as ****On****.
 
-The `limit-ports` rule applied to SSH traffic matching its configured source range and target network tag.
+The `limit-ports` rule was configured to deny SSH traffic matching its source range and target network tag.
 
 The `default-allow-internal` rule permitted a broad range of internal network protocols and ports.
 
@@ -710,7 +711,7 @@ It therefore does not independently demonstrate that matching traffic was genera
 
 #### Remaining SSH Access Concern
 
-The final firewall list confirmed the earlier observation that `limit-ports` used the **Deny** action for TCP port 22.
+The final firewall list confirmed the earlier observation that `limit-ports` used the ****Deny**** action for TCP port 22.
 
 The source range configured for this rule was the Google Cloud IAP TCP forwarding range, `35.235.240.0/20`.
 
@@ -756,7 +757,7 @@ After completing the documented Compute Engine recovery, Cloud Storage access re
 
 The objective was to compare the visible compliance findings before and after remediation and evaluate whether the reported security posture had improved.
 
-The initial assessment identified five non-compliant controls, with findings involving logging, network access, and access-control concerns.
+The initial report displayed five non-compliant controls. The underlying rule-to-control mappings were not expanded in the preserved evidence.
 
 #### Post-Remediation Compliance Report
 
@@ -778,7 +779,7 @@ The visible control rows were marked Compliant and displayed zero findings.
 
 ![Post-remediation PCI DSS 3.2.1 compliance report](evidence/10-post-remediation-pci-dss-compliance.png)
 
-*Figure 10 — Post-remediation Security Command Center PCI DSS 3.2.1 report displaying no detected findings and zero findings for visible compliant controls. Detector health and complete organizational compliance are not independently verified.*
+**Figure 10 — Post-remediation Security Command Center PCI DSS 3.2.1 report displaying no detected findings and zero findings for visible compliant controls. Detector health and complete organizational compliance are not independently verified.**
 
 The report also advised verifying that the detectors evaluating the compliance standard were active and running successfully.
 
@@ -925,16 +926,16 @@ The investigation was conducted within an authorized, temporary Google Cloud lab
 
 The following limitations apply:
 
-1. **Simulated incident:** The Cymbal Retail breach narrative provided exercise context. The screenshots do not independently prove an actual intrusion, malware infection, or customer-data exfiltration.
-2. **Security findings:** SCC findings identified potential threats and misconfigurations, but the summary screenshots did not provide complete technical details or evidence of successful exploitation.
-3. **VM recovery:** The replacement instance was visible as running. The preserved evidence did not independently verify the boot-disk snapshot source, restored-system integrity, external IP configuration, Secure Boot state, or removal of the original instance.
-4. **Storage access:** The before-and-after screenshots confirmed changes to the bucket's public access settings. They did not establish whether objects had previously been downloaded or accessed without authorization.
-5. **Firewall scope:** The final VPC firewall list did not include the removed default SSH, RDP, and ICMP rules. However, inherited firewall policies were inaccessible to the training account.
-6. **IAP SSH configuration:** The displayed `limit-ports` rule denied TCP 22 traffic from the IAP source range. Successful IAP SSH connectivity was not demonstrated.
-7. **Firewall logging:** Logging was enabled on both visible rules, but no corresponding traffic logs were preserved to verify actual event generation.
-8. **Compliance controls:** The initial PCI DSS report showed five non-compliant controls. The final report displayed no findings affecting PCI DSS 3.2.1, but not every previously non-compliant control was individually visible for comparison.
-9. **Detector health:** The final report recommended confirming detector operation, but no separate detector-health validation was preserved.
-10. **Compliance scope:** The SCC report did not constitute a comprehensive organizational PCI DSS assessment or certification.
+1. ****Simulated incident:**** The Cymbal Retail breach narrative provided exercise context. The screenshots do not independently prove an actual intrusion, malware infection, or customer-data exfiltration.
+2. ****Security findings:**** SCC findings identified potential threats and misconfigurations, but the summary screenshots did not provide complete technical details or evidence of successful exploitation.
+3. ****VM recovery:**** The replacement instance was visible as running. The preserved evidence did not independently verify the boot-disk snapshot source, restored-system integrity, external IP configuration, Secure Boot state, or removal of the original instance.
+4. ****Storage access:**** The before-and-after screenshots confirmed changes to the bucket's public access settings. They did not establish whether objects had previously been downloaded or accessed without authorization.
+5. ****Firewall scope:**** The final VPC firewall list did not include the removed default SSH, RDP, and ICMP rules. However, inherited firewall policies were inaccessible to the training account.
+6. ****IAP SSH configuration:**** The displayed `limit-ports` rule denied TCP 22 traffic from the IAP source range. Successful IAP SSH connectivity was not demonstrated.
+7. ****Firewall logging:**** Logging was enabled on both visible rules, but no corresponding traffic logs were preserved to verify actual event generation.
+8. ****Compliance controls:**** The initial PCI DSS report showed five non-compliant controls. The final report displayed no findings affecting PCI DSS 3.2.1, but not every previously non-compliant control was individually visible for comparison.
+9. ****Detector health:**** The final report recommended confirming detector operation, but no separate detector-health validation was preserved.
+10. ****Compliance scope:**** The SCC report did not constitute a comprehensive organizational PCI DSS assessment or certification.
 
 ## Skills Demonstrated
 
@@ -1003,4 +1004,3 @@ These skills are applicable to cloud security operations, incident response, inf
 | 10 | `10-post-remediation-pci-dss-compliance.png` | Post-remediation PCI DSS 3.2.1 report |
 
 All ten screenshots are located in the accompanying [`evidence/`](evidence/) directory.
-
