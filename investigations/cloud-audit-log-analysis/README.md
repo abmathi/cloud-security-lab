@@ -227,3 +227,87 @@ The expanded Cloud Storage deletion record exposed relevant administrative metad
 The exercise then established a Log Router workflow for analyzing subsequent audit activity in BigQuery.
 
 The next findings examine the resulting SQL queries and their evidence.
+
+### Finding 3 — Compute Engine Deletion Analysis in BigQuery
+
+#### Investigation Context
+
+The third investigation used Google Cloud BigQuery to analyze exported Admin Activity audit logs for destructive Compute Engine operations.
+
+The objective was to identify virtual machine deletion events, extract relevant attribution fields, and understand how SQL can support the reconstruction of cloud administrative activity.
+
+The exercise generated a controlled Compute Engine deletion as part of the simulated incident.
+
+#### BigQuery SQL Investigation
+
+I used the following SQL query to identify Compute Engine instance-deletion operations in the exported audit-log dataset:
+
+```sql
+SELECT
+  timestamp,
+  resource.labels.instance_id,
+  protopayload_auditlog.authenticationInfo.principalEmail,
+  protopayload_auditlog.resourceName,
+  protopayload_auditlog.methodName
+FROM
+  `auditlogs_dataset.cloudaudit_googleapis_com_activity_*`
+WHERE
+  PARSE_DATE('%Y%m%d', _TABLE_SUFFIX) BETWEEN
+    DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+    AND CURRENT_DATE()
+  AND resource.type = "gce_instance"
+  AND operation.first IS TRUE
+  AND protopayload_auditlog.methodName = "v1.compute.instances.delete"
+ORDER BY
+  timestamp,
+  resource.labels.instance_id
+LIMIT 1000;
+```
+
+The query selected the following fields:
+
+| Field | Investigation Purpose |
+| --- | --- |
+| `timestamp` | Establish when the logged operation occurred |
+| `resource.labels.instance_id` | Identify the associated Compute Engine instance |
+| `authenticationInfo.principalEmail` | Identify the principal recorded in the audit event |
+| `resourceName` | Identify the affected cloud resource |
+| `methodName` | Confirm the administrative operation |
+
+![Compute Engine deletion investigation query in BigQuery](evidence/03-compute-engine-deletion-query.png)
+
+*Figure 3 — BigQuery SQL editor showing a query for Compute Engine instance-deletion events using `gce_instance`, `operation.first`, and `v1.compute.instances.delete` filters. The visible results pane contains Cloud Storage deletion records from a different query and does not establish the outcome of the displayed Compute Engine query.*
+
+The query restricted results to Compute Engine instance resources and the `v1.compute.instances.delete` method.
+
+It also used the wildcard table suffix to limit the search to a seven-day period relative to the execution date.
+
+#### Evidence Interpretation
+
+The preserved screenshot shows the Compute Engine deletion query in BigQuery's SQL editor.
+
+The query results pane, however, displays two Cloud Storage bucket-deletion records associated with an earlier query.
+
+Therefore, the screenshot supports the construction and preparation of the Compute Engine investigation query but does not independently establish its returned row count, affected instance, or executing principal.
+
+The original lab instructions describe a controlled virtual machine deletion and an expected matching audit record. Those instructions provide scenario context rather than independent verification of the query's results.
+
+#### Security Relevance
+
+Compute Engine instance deletion is a destructive administrative operation that can affect service availability and potentially remove associated resources.
+
+In a cloud security investigation, analysts can use audit records to examine the deletion timestamp, affected instance, recorded principal, and surrounding administrative operations.
+
+Correlating this information with IAM changes, authentication records, and other cloud activity can help determine whether a deletion was authorized or suspicious.
+
+However, a deletion event alone does not establish malicious intent.
+
+#### Analyst Assessment
+
+**Assessment: Compute Engine deletion investigation query constructed using exported Cloud Audit Logs.**
+
+The investigation demonstrated SQL filtering of audit records by resource type, administrative method, and time range.
+
+The preserved screenshot documents the query but does not independently verify the returned Compute Engine deletion events.
+
+The next finding examines Cloud Storage deletion records that are visible in BigQuery's results.
