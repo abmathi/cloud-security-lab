@@ -201,3 +201,118 @@ The record included the source port, protocol, and traffic measurements, establi
 The screenshot did not independently establish firewall disposition or successful HTTP application access.
 
 The next phase examines the configured firewall rules and the introduction of the HTTP denial control.
+
+### Finding 2 — Firewall Rule Configuration and HTTP Denial
+
+#### Investigation Context
+
+After establishing the initial HTTP traffic baseline, I reviewed the VPC firewall rules configured for the Cymbal Bank web server.
+
+The guided exercise required creating an ingress rule permitting HTTP and SSH traffic, followed by a separate ingress rule denying HTTP traffic.
+
+The objective was to examine the configured access controls, identify overlapping rules, and determine how Google Cloud firewall priority and action evaluation affected incoming HTTP connections.
+
+#### Firewall Rule Configuration
+
+I opened the VPC firewall rules page for the `vpc-net` network.
+
+The preserved screenshot displayed two enabled firewall rules:
+
+- `allow-http-ssh`
+- `deny-http`
+
+The following settings were visible:
+
+| Firewall Attribute | `allow-http-ssh` | `deny-http` |
+| --- | --- | --- |
+| VPC network | `vpc-net` | `vpc-net` |
+| Direction | Ingress | Ingress |
+| Target network tag | `http-server` | `http-server` |
+| Action | Allow | Deny |
+| TCP ports | `22`, `80` | `80` |
+| Priority | `1000` | `1000` |
+| Firewall logging | On | On |
+
+![HTTP allow and deny firewall rules](evidence/02-http-allow-deny-firewall-rules.png)
+
+*Figure 2 — Google Cloud VPC firewall list showing `allow-http-ssh` and `deny-http`, both targeting the `http-server` network tag with priority `1000` and logging enabled. The deny rule targets TCP port 80, while the allow rule permits TCP ports 22 and 80.*
+
+Both rules targeted instances carrying the `http-server` network tag.
+
+The allow rule permitted SSH and HTTP, while the deny rule explicitly blocked HTTP for matching traffic.
+
+The original lab instructions specified `0.0.0.0/0` as the source IPv4 range for both rules.
+
+The screenshot displayed the source-filter category but did not independently reveal the complete source range values.
+
+#### HTTP and SSH Access Analysis
+
+The `allow-http-ssh` rule was configured to permit incoming connections on:
+
+- TCP port `22` — SSH
+- TCP port `80` — HTTP
+
+The `deny-http` rule was configured to deny incoming connections on:
+
+- TCP port `80` — HTTP
+
+Because both rules used the same target network tag and priority, their conditions overlapped for HTTP traffic matching both rules' source criteria.
+
+This created an opportunity to evaluate how Google Cloud resolves conflicting firewall actions.
+
+#### Firewall Priority and Rule Evaluation
+
+Google Cloud VPC firewall rules use numerical priorities, with lower values representing higher priority.
+
+When an applicable allow rule and deny rule share the same priority, the deny action takes precedence for traffic matching both rules.
+
+The preserved screenshot showed both rules configured with priority `1000`.
+
+| Traffic | Allow Rule | Deny Rule | Expected Result Under These Rules |
+| --- | --- | --- | --- |
+| TCP `80` | Allow | Deny | Deny takes precedence |
+| TCP `22` | Allow | No matching TCP 22 denial in this rule | Allowed by `allow-http-ssh`, subject to other applicable controls |
+
+This rule evaluation explains why introducing an HTTP deny rule can override an existing allow rule without deleting the allow rule.
+
+The expected outcome remains subject to the complete effective firewall policy and whether traffic matches the configured source and target criteria.
+
+#### Firewall Logging Configuration
+
+The firewall list displayed logging as **On** for both rules.
+
+Firewall Rules Logging can provide records of connections matching logged rules, including information about the firewall action and connection attributes.
+
+The screenshot established the enabled logging configuration but did not itself display any recorded connection events.
+
+The following investigation stage examines the corresponding firewall logs to evaluate actual denied traffic.
+
+#### Security Implications
+
+This configuration illustrates the importance of understanding overlapping access-control rules.
+
+An administrator reviewing only the `allow-http-ssh` rule might incorrectly assume HTTP access remained available.
+
+However, the additional `deny-http` rule could override that permission for matching traffic because of its action and equal priority.
+
+Security analysts must therefore consider all applicable rules rather than interpreting a firewall rule in isolation.
+
+The rule configuration also highlights that allowing SSH or HTTP from the source ranges prescribed by the exercise is appropriate only within the intended training context.
+
+In production, administrative access and public-facing services should be scoped according to verified operational requirements.
+
+#### Analyst Assessment
+
+**Assessment: Overlapping HTTP allow and deny rules identified, with the deny action taking precedence at equal priority for matching traffic.**
+
+The screenshot showed two enabled ingress rules targeting the `http-server` network tag.
+
+Both rules used priority `1000` and had firewall logging enabled.
+
+The allow rule permitted TCP ports `22` and `80`, while the deny rule targeted TCP port `80`.
+
+Under Google Cloud VPC firewall evaluation behavior, the deny rule takes precedence for HTTP traffic matching both rules.
+
+The screenshot established the intended firewall configuration, but actual connection denial required supporting traffic evidence.
+
+The next phase examines the firewall log records generated during the HTTP connection test.
