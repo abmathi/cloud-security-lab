@@ -41,15 +41,23 @@ The preserved evidence documents configuration and deployment changes rather tha
 
 ### Investigation Objectives
 
-1. Review the supplied Terraform configuration for the VPC and firewall.
-2. Identify the protocols and ports permitted by the original firewall rule.
-3. Review the initial Terraform infrastructure deployment plan.
-4. Verify the deployed firewall configuration in Google Cloud.
-5. Independently identify an unnecessarily broad TCP port range.
-6. Modify the Terraform configuration to retain only the assumed required application ports.
-7. Review the planned infrastructure update.
-8. Apply and verify the firewall change.
-9. Document the security implications and limitations of the observed configuration.
+1\. Review the supplied Terraform configuration for the VPC and firewall.
+
+2\. Identify the protocols and ports permitted by the original firewall rule.
+
+3\. Review the initial Terraform infrastructure deployment plan.
+
+4\. Verify the deployed firewall configuration in Google Cloud.
+
+5\. Independently identify an unnecessarily broad TCP port range.
+
+6\. Modify the Terraform configuration to retain only the assumed required application ports.
+
+7\. Review the planned infrastructure update.
+
+8\. Apply and verify the firewall change.
+
+9\. Document the security implications and limitations of the observed configuration.
 
 ## Evidence Sources and Methodology
 
@@ -91,10 +99,13 @@ The preserved Terraform plan and Google Cloud firewall screenshots support concl
 
 The report will document four findings:
 
-1. Terraform VPC and Firewall Configuration Review
-2. Initial Infrastructure Planning and Deployment Verification
-3. Independent Firewall Hardening Through Terraform
-4. Post-Change Firewall Configuration Verification
+1\. Terraform VPC and Firewall Configuration Review
+
+2\. Initial Infrastructure Planning and Deployment Verification
+
+3\. Independent Firewall Hardening Through Terraform
+
+4\. Post-Change Firewall Configuration Verification
 
 The final sections will summarize security implications, evidence limitations, skills demonstrated, and supporting screenshots.
 
@@ -114,36 +125,49 @@ This configuration would later provide the baseline for an independent network-s
 
 I examined the Terraform file containing two Google Cloud resources:
 
-- `google_compute_network.default` — defines the application VPC network.
-- `google_compute_firewall.default` — defines a firewall rule associated with that VPC.
+\- `google_compute_network.default` — defines the application VPC network.
+
+\- `google_compute_firewall.default` — defines a firewall rule associated with that VPC.
 
 The original configuration included the following resource definitions:
 
 ```hcl
+
 resource "google_compute_firewall" "default" {
-  name    = "test-firewall-${local.name_suffix}"
-  network = google_compute_network.default.name
 
-  allow {
-    protocol = "icmp"
-  }
+  name    = "test-firewall-${local.name_suffix}"
 
-  allow {
-    protocol = "tcp"
-    ports    = ["80", "8080", "1000-2000"]
-  }
+  network = google_compute_network.default.name
 
-  source_tags = ["web"]
+  allow {
+
+    protocol = "icmp"
+
+  }
+
+  allow {
+
+    protocol = "tcp"
+
+    ports    = ["80", "8080", "1000-2000"]
+
+  }
+
+  source_tags = ["web"]
+
 }
 
 resource "google_compute_network" "default" {
-  name = "test-network-${local.name_suffix}"
+
+  name = "test-network-${local.name_suffix}"
+
 }
+
 ```
 
 ![Original Terraform VPC and firewall configuration](evidence/01-original-terraform-firewall-configuration.png)
 
-*Figure 1 — Original `main.tf` defining the Google Cloud VPC and firewall resources, including ICMP, TCP ports 80 and 8080, the broader TCP 1000–2000 range, and a `web` source-tag restriction.*
+**Figure 1 — Original `main.tf` defining the Google Cloud VPC and firewall resources, including ICMP, TCP ports 80 and 8080, the broader TCP 1000–2000 range, and a `web` source-tag restriction.**
 
 The use of `local.name_suffix` allowed the resource names to include a locally defined suffix.
 
@@ -203,7 +227,7 @@ Before making the change in a production environment, an analyst would need to c
 
 #### Analyst Assessment
 
-**Assessment: Terraform configuration identified with an unnecessarily broad TCP port allowance under the assumed application requirements.**
+****Assessment: Terraform configuration identified with an unnecessarily broad TCP port allowance under the assumed application requirements.****
 
 The original `main.tf` defined a Google Cloud VPC and associated ingress firewall rule.
 
@@ -226,7 +250,9 @@ The objective was to establish that the original Infrastructure as Code configur
 From the supplied Terraform project directory in Google Cloud Shell, I ran:
 
 ```bash
+
 terraform apply
+
 ```
 
 Terraform generated an execution plan containing three resource additions.
@@ -239,12 +265,14 @@ Terraform generated an execution plan containing three resource additions.
 
 ![Initial Terraform deployment plan](evidence/02-initial-terraform-deployment-plan.png)
 
-*Figure 2 — Terraform apply execution plan showing three resource additions, including a VPC, firewall rule, and random resource-name suffix. The screenshot captures the plan before confirmation.*
+**Figure 2 — Terraform apply execution plan showing three resource additions, including a VPC, firewall rule, and random resource-name suffix. The screenshot captures the plan before confirmation.**
 
 The plan summary reported:
 
 ```text
+
 Plan: 3 to add, 0 to change, 0 to destroy.
+
 ```
 
 The planned firewall allowed ICMP and TCP ports `80`, `8080`, and `1000-2000`.
@@ -274,7 +302,7 @@ The deployed firewall showed the following configuration:
 
 ![Original deployed Google Cloud firewall](evidence/03-original-deployed-firewall.png)
 
-*Figure 3 — Google Cloud firewall `test-firewall-helping-liger` allowing ICMP and TCP ports 80, 8080, and 1000–2000 from sources with the `web` network tag. Firewall logging is Off.*
+**Figure 3 — Google Cloud firewall `test-firewall-helping-liger` allowing ICMP and TCP ports 80, 8080, and 1000–2000 from sources with the `web` network tag. Firewall logging is Off.**
 
 The firewall's visible settings matched the traffic permissions defined in the original Terraform configuration.
 
@@ -308,7 +336,7 @@ This investigation identified an opportunity to reduce permitted TCP ports based
 
 #### Analyst Assessment
 
-**Assessment: Original Terraform firewall configuration verified in the deployed Google Cloud environment.**
+****Assessment: Original Terraform firewall configuration verified in the deployed Google Cloud environment.****
 
 The Terraform execution plan proposed creating three resources, including the VPC network and firewall.
 
@@ -333,10 +361,15 @@ The objective was to reduce unnecessary network permissions through Terraform wi
 The original Terraform configuration contained the following TCP allowance:
 
 ```hcl
+
 allow {
-  protocol = "tcp"
-  ports    = ["80", "8080", "1000-2000"]
+
+  protocol = "tcp"
+
+  ports    = ["80", "8080", "1000-2000"]
+
 }
+
 ```
 
 The inclusion of `1000-2000` permitted a substantially broader set of TCP destination ports than the assumed application requirements justified.
@@ -350,10 +383,15 @@ The preserved evidence did not establish that services were listening on those p
 I modified the TCP allowance in `main.tf` to retain only the assumed required ports:
 
 ```hcl
+
 allow {
-  protocol = "tcp"
-  ports    = ["80", "8080"]
+
+  protocol = "tcp"
+
+  ports    = ["80", "8080"]
+
 }
+
 ```
 
 The independent modification removed TCP ports `1000-2000` while preserving the application ports `80` and `8080`.
@@ -365,7 +403,9 @@ The intended change did not require creating a new firewall or VPC network.
 After editing the configuration, I ran:
 
 ```bash
+
 terraform plan
+
 ```
 
 Terraform refreshed the existing resource state and produced an execution plan identifying an in-place update to:
@@ -379,7 +419,9 @@ An unchanged firewall configuration block was hidden in the plan output.
 The execution plan reported:
 
 ```text
+
 Plan: 0 to add, 1 to change, 0 to destroy.
+
 ```
 
 | Terraform Plan Attribute | Observed Result |
@@ -395,7 +437,7 @@ Plan: 0 to add, 1 to change, 0 to destroy.
 
 ![Terraform firewall hardening execution plan](evidence/04-terraform-firewall-hardening-plan.png)
 
-*Figure 4 — Terraform plan showing an in-place update to `google_compute_firewall.default`, removing TCP ports `1000-2000` while retaining ports `80` and `8080`. The plan reports zero additions, one change, and zero destructions.*
+**Figure 4 — Terraform plan showing an in-place update to `google_compute_firewall.default`, removing TCP ports `1000-2000` while retaining ports `80` and `8080`. The plan reports zero additions, one change, and zero destructions.**
 
 The plan indicated that Terraform could modify the existing firewall resource without replacing it.
 
@@ -424,7 +466,7 @@ It also did not address the previously observed disabled firewall rule logging.
 
 #### Analyst Assessment
 
-**Assessment: Terraform plan successfully identified an in-place firewall hardening change that removed the unnecessary TCP port range `1000-2000`.**
+****Assessment: Terraform plan successfully identified an in-place firewall hardening change that removed the unnecessary TCP port range `1000-2000`.****
 
 The independent review identified an opportunity to narrow network permissions while retaining the assumed required application ports.
 
@@ -465,7 +507,7 @@ The preserved screenshot displayed the following configuration:
 
 ![Hardened Terraform firewall configuration](evidence/05-hardened-terraform-firewall-verification.png)
 
-*Figure 5 — Final Google Cloud firewall configuration showing TCP ports 80 and 8080, ICMP, and the `web` source network tag. The previously permitted TCP range 1000–2000 is absent. Firewall logging remains Off.*
+**Figure 5 — Final Google Cloud firewall configuration showing TCP ports 80 and 8080, ICMP, and the `web` source network tag. The previously permitted TCP range 1000–2000 is absent. Firewall logging remains Off.**
 
 The final firewall rule no longer included TCP ports `1000-2000`.
 
@@ -512,25 +554,25 @@ The preserved evidence also does not demonstrate actual application connectivity
 
 Although the firewall's TCP permissions were reduced, several considerations remain relevant to a production security assessment.
 
-**Firewall rule logging**
+****Firewall rule logging****
 
 The final screenshot continued to display logging as Off.
 
 The independent Terraform modification focused on permitted destination ports and did not include evidence of enabling firewall rule logging.
 
-**Source identity and access scope**
+****Source identity and access scope****
 
 The firewall used the `web` source network tag.
 
 This is not equivalent to unrestricted internet access, but its security depends on which source instances carry the tag and how network tags are administered.
 
-**Effective firewall evaluation**
+****Effective firewall evaluation****
 
 The screenshot displayed a single firewall rule rather than the complete set of applicable network access controls.
 
 A comprehensive assessment would require examining other applicable rules, effective firewall policies, and relevant application traffic.
 
-**Application validation**
+****Application validation****
 
 The independent exercise assumed that only TCP ports `80` and `8080` were necessary.
 
@@ -538,7 +580,7 @@ Production hardening would require validating those assumptions with application
 
 #### Analyst Assessment
 
-**Assessment: Terraform-based firewall hardening verified in the deployed Google Cloud configuration.**
+****Assessment: Terraform-based firewall hardening verified in the deployed Google Cloud configuration.****
 
 The initial firewall permitted TCP ports `80`, `8080`, and `1000-2000`.
 
@@ -567,13 +609,13 @@ Removing TCP ports `1000-2000` narrowed the traffic permitted by the firewall wh
 
 ### Security Lessons
 
-**1. Infrastructure deployment success does not guarantee secure configuration.**
+****1. Infrastructure deployment success does not guarantee secure configuration.****
 
 The original Terraform configuration successfully defined the required network resources, but it also included an unnecessary TCP port range under the exercise's assumed application requirements.
 
 Security review remains necessary even when infrastructure is deployed through automation.
 
-**2. Terraform plans provide a useful change-control checkpoint.**
+****2. Terraform plans provide a useful change-control checkpoint.****
 
 The independent hardening plan showed:
 
@@ -583,13 +625,13 @@ This established that Terraform intended to modify an existing firewall rather t
 
 Reviewing the proposed changes before deployment reduces the risk of unintended modifications.
 
-**3. Security improvements require post-change verification.**
+****3. Security improvements require post-change verification.****
 
 The initial and final Google Cloud firewall screenshots showed that the permitted TCP ports changed from `80`, `8080`, and `1000-2000` to only `80` and `8080`.
 
 The final screenshot provided independent configuration-level verification beyond the Terraform plan.
 
-**4. Least privilege must be evaluated within the full network context.**
+****4. Least privilege must be evaluated within the full network context.****
 
 The narrower firewall rule reduced permitted destination ports for traffic matching that rule.
 
@@ -615,18 +657,29 @@ A production assessment would require reviewing effective firewall policies, sou
 
 Before applying a similar change in a production environment, a cloud security analyst should:
 
-1. Confirm the application's required ports and protocols with the application owner.
-2. Examine available network telemetry to identify legitimate traffic dependencies.
-3. Review all applicable VPC firewall rules and hierarchical firewall policies.
-4. Verify which instances carry the `web` source network tag.
-5. Evaluate whether source service accounts or other more tightly governed identities would be appropriate for access restrictions.
-6. Remove unnecessary destination-port allowances from the Terraform configuration.
-7. Review `terraform plan` for unexpected changes.
-8. Apply the approved configuration through an established change-control process.
-9. Verify the deployed firewall configuration.
-10. Test application functionality and expected network connectivity.
-11. Enable suitable firewall rule logging where justified by monitoring requirements and cost considerations.
-12. Preserve deployment evidence, change approvals, and validation results.
+1\. Confirm the application's required ports and protocols with the application owner.
+
+2\. Examine available network telemetry to identify legitimate traffic dependencies.
+
+3\. Review all applicable VPC firewall rules and hierarchical firewall policies.
+
+4\. Verify which instances carry the `web` source network tag.
+
+5\. Evaluate whether source service accounts or other more tightly governed identities would be appropriate for access restrictions.
+
+6\. Remove unnecessary destination-port allowances from the Terraform configuration.
+
+7\. Review `terraform plan` for unexpected changes.
+
+8\. Apply the approved configuration through an established change-control process.
+
+9\. Verify the deployed firewall configuration.
+
+10\. Test application functionality and expected network connectivity.
+
+11\. Enable suitable firewall rule logging where justified by monitoring requirements and cost considerations.
+
+12\. Preserve deployment evidence, change approvals, and validation results.
 
 These are recommended production practices, not additional actions independently demonstrated by the lab screenshots.
 
@@ -636,42 +689,63 @@ The investigation was completed in an authorized, temporary Google Cloud trainin
 
 The following limitations apply:
 
-1. **Application requirements:** The independent exercise assumed TCP ports `80` and `8080` were required. No production application dependency analysis or traffic baseline was preserved.
-2. **Source-tag restriction:** The firewall used `source_tags = ["web"]`. The screenshots did not enumerate matching source instances or evaluate the governance of network tags.
-3. **Initial Terraform execution:** The initial screenshot captured the deployment plan and interactive approval prompt rather than the completed `terraform apply` output.
-4. **Hardening execution:** The preserved hardening screenshot displayed `terraform plan`, not a completed Terraform apply operation.
-5. **Final configuration:** The final Google Cloud screenshot showed the narrower port allowance but did not include the underlying Terraform state or completed apply output.
-6. **Effective network policy:** The screenshots did not establish whether other applicable firewall rules or hierarchical policies allowed the removed ports.
-7. **Service exposure:** Permitted firewall ports do not independently prove that network services were listening, reachable, vulnerable, or exploited.
-8. **Application availability:** No post-change application connectivity or functional test results were preserved.
-9. **Logging:** Firewall rule logging remained Off, and no firewall traffic logs were included.
-10. **Security scope:** The exercise focused on a specific network rule rather than a comprehensive review of the entire Google Cloud environment.
+1\. ****Application requirements:**** The independent exercise assumed TCP ports `80` and `8080` were required. No production application dependency analysis or traffic baseline was preserved.
+
+2\. ****Source-tag restriction:**** The firewall used `source_tags = ["web"]`. The screenshots did not enumerate matching source instances or evaluate the governance of network tags.
+
+3\. ****Initial Terraform execution:**** The initial screenshot captured the deployment plan and interactive approval prompt rather than the completed `terraform apply` output.
+
+4\. ****Hardening execution:**** The preserved hardening screenshot displayed `terraform plan`, not a completed Terraform apply operation.
+
+5\. ****Final configuration:**** The final Google Cloud screenshot showed the narrower port allowance but did not include the underlying Terraform state or completed apply output.
+
+6\. ****Effective network policy:**** The screenshots did not establish whether other applicable firewall rules or hierarchical policies allowed the removed ports.
+
+7\. ****Service exposure:**** Permitted firewall ports do not independently prove that network services were listening, reachable, vulnerable, or exploited.
+
+8\. ****Application availability:**** No post-change application connectivity or functional test results were preserved.
+
+9\. ****Logging:**** Firewall rule logging remained Off, and no firewall traffic logs were included.
+
+10\. ****Security scope:**** The exercise focused on a specific network rule rather than a comprehensive review of the entire Google Cloud environment.
 
 ## Skills Demonstrated
 
 ### Infrastructure as Code
 
-- Reviewed Terraform resource definitions for Google Cloud infrastructure.
-- Interpreted Terraform network and firewall configurations.
-- Examined Terraform execution plans.
-- Identified the difference between resource creation and in-place updates.
-- Documented infrastructure changes through a repeatable workflow.
+\- Reviewed Terraform resource definitions for Google Cloud infrastructure.
+
+\- Interpreted Terraform network and firewall configurations.
+
+\- Examined Terraform execution plans.
+
+\- Identified the difference between resource creation and in-place updates.
+
+\- Documented infrastructure changes through a repeatable workflow.
 
 ### Cloud Network Security
 
-- Analyzed Google Cloud VPC firewall rules.
-- Evaluated allowed protocols, destination ports, direction, and source restrictions.
-- Identified unnecessary permitted TCP ports.
-- Applied network least-privilege principles to a Terraform configuration.
-- Compared original and hardened firewall configurations.
+\- Analyzed Google Cloud VPC firewall rules.
+
+\- Evaluated allowed protocols, destination ports, direction, and source restrictions.
+
+\- Identified unnecessary permitted TCP ports.
+
+\- Applied network least-privilege principles to a Terraform configuration.
+
+\- Compared original and hardened firewall configurations.
 
 ### Security Validation and Reporting
 
-- Reviewed planned changes before deployment.
-- Verified firewall settings in the Google Cloud console.
-- Distinguished proposed changes from observed deployed configurations.
-- Identified remaining logging and effective-policy limitations.
-- Documented evidence-backed security assessments and recommendations.
+\- Reviewed planned changes before deployment.
+
+\- Verified firewall settings in the Google Cloud console.
+
+\- Distinguished proposed changes from observed deployed configurations.
+
+\- Identified remaining logging and effective-policy limitations.
+
+\- Documented evidence-backed security assessments and recommendations.
 
 ## Conclusion
 
