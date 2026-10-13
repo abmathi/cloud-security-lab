@@ -217,3 +217,80 @@ The investigation identified the affected credential resource, documented the as
 The evidence supports a credential-management concern rather than a confirmed security compromise.
 
 The next investigation phase verifies whether the unnecessary user-managed key was removed from the service account.
+
+### Finding 3 — User-Managed Service Account Key Remediation
+
+#### Investigation Context
+
+After examining the active Security Command Center finding, I followed the lab remediation procedure to remove the user-managed JSON authentication key associated with the `test-account` service account.
+
+The objective was to address the credential-management risk and verify the resulting key inventory through the Google Cloud console.
+
+#### Remediation Procedure
+
+The remediation focused on deleting the unnecessary user-managed service account key.
+
+The procedure involved:
+
+1. Navigating to IAM & Admin → Service Accounts.
+2. Opening the `test-account` service account.
+3. Selecting the **Keys** tab.
+4. Deleting the user-managed authentication key.
+5. Reviewing the Keys tab to verify the remaining key inventory.
+
+Deleting the key revokes that service account key as a Google Cloud authentication credential.
+
+This does not automatically delete copies of the downloaded JSON file or change IAM roles assigned to the service account.
+
+#### Post-Remediation Verification
+
+After completing the deletion procedure, I reviewed the service account's Keys tab.
+
+| Verification Item | Observed Result |
+| --- | --- |
+| Affected identity | `test-account` |
+| Console location | Service Accounts → Keys |
+| Displayed key records | No rows to display |
+| Remaining user-managed keys | None visible in the captured inventory |
+| IAM role changes | Not demonstrated by this screenshot |
+| SCC finding resolution | Not independently demonstrated by this screenshot |
+
+![Service account key inventory after remediation](evidence/03-service-account-key-remediation.png)
+
+*Figure 3 — Google Cloud IAM service account Keys tab showing no key records for `test-account` following the remediation procedure.*
+
+The screenshot confirmed that no user-managed keys were listed for the affected service account at the time of verification.
+
+This supports the conclusion that the key-removal procedure addressed the visible credential-management configuration.
+
+However, no subsequent SCC finding-status screenshot was preserved. Therefore, the evidence does not independently establish that the original finding had transitioned to an inactive or resolved state.
+
+#### Security Relevance
+
+User-managed service account keys can become security risks when they are stored insecurely, exposed in source repositories, shared unnecessarily, or retained after their intended use.
+
+Removing an unnecessary key eliminates that specific credential's ability to authenticate to Google Cloud.
+
+For production environments, organizations should prefer supported short-lived or keyless authentication mechanisms, including attached service account identities or Workload Identity Federation where appropriate.
+
+Organizations can also implement policies restricting user-managed key creation to reduce unnecessary credential exposure.
+
+Before key deletion in a production environment, dependencies should be reviewed to avoid interrupting legitimate applications.
+
+#### Residual Risk
+
+Deleting a user-managed service account key addresses the credential-management finding, but it does not automatically reduce the permissions assigned to the service account.
+
+In this exercise, the account had also been granted project-level Owner access.
+
+The next investigation phase independently examines these permissions to determine whether a separate excessive-privilege concern remained after key deletion.
+
+#### Analyst Assessment
+
+**Assessment: User-managed service account key removed from the visible key inventory.**
+
+The service account's Keys tab displayed no remaining key records following the remediation procedure.
+
+This verified the post-remediation state of the key inventory, but did not independently confirm SCC finding closure or changes to the account's IAM permissions.
+
+Further review was therefore warranted to assess remaining privilege-related risks.
