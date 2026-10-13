@@ -151,3 +151,79 @@ Logs Explorer successfully isolated administrative activity associated with the 
 The events provided a starting point for investigating destructive cloud-resource activity and demonstrated the value of filtering audit records by service and operation.
 
 The next stages will examine log export, BigQuery analysis, and correlation across multiple cloud resource types.
+
+### Finding 2 — Audit Event Attribution and Log Export Configuration
+
+#### Investigation Context
+
+After identifying Cloud Storage bucket-deletion events, I examined the structure of an individual Google Cloud Admin Activity audit record.
+
+The objective was to identify the fields available for reconstructing administrative activity and prepare the logs for further analysis in BigQuery.
+
+#### Audit Record Inspection
+
+Using Logs Explorer, I expanded a `storage.buckets.delete` audit event and examined its structured payload.
+
+The selected record was timestamped September 21, 2026, at approximately 15:10:46 MST.
+
+| Audit Field | Investigation Value |
+| --- | --- |
+| `protoPayload.methodName` | Identifies the administrative operation |
+| `protoPayload.serviceName` | Identifies the Google Cloud service |
+| `protoPayload.authenticationInfo` | Contains information about the authenticated principal |
+| `protoPayload.authorizationInfo` | Contains authorization-related information |
+| `protoPayload.requestMetadata` | May provide additional request context |
+| `protoPayload.resourceName` | Identifies the resource associated with the event |
+| `timestamp` | Supports chronological investigation |
+| `receiveTimestamp` | Records when Cloud Logging received the event |
+
+![Expanded Google Cloud audit event](evidence/02-expanded-audit-event.png)
+
+*Figure 2 — Expanded Google Cloud Admin Activity record for a Cloud Storage bucket-deletion operation. The structured payload exposes service, method, resource, timestamp, and attribution-related fields.*
+
+The expanded event identified `storage.googleapis.com` as the service and `storage.buckets.delete` as the administrative method.
+
+The record also included a Cloud Storage bucket resource name and principal information in the event summary.
+
+Although the audit payload exposed additional structured fields, several nested objects remained collapsed in the preserved screenshot. Their complete contents were not independently verified from that image.
+
+#### Log Export Configuration
+
+The next stage of the exercise configured Google Cloud Log Router to send Admin Activity logs to BigQuery.
+
+Following the lab procedure, I created a log sink with the following configuration:
+
+| Component | Configuration |
+| --- | --- |
+| Sink name | `AuditLogsExport` |
+| Destination type | BigQuery dataset |
+| Dataset | `auditlogs_dataset` |
+| Included logs | Cloud Audit Logs Admin Activity |
+
+The sink was configured to route matching future log entries to BigQuery for SQL-based analysis.
+
+An important operational consideration is that creating a Log Router sink does not automatically backfill earlier log records.
+
+Consequently, additional administrative activity was generated after sink creation so the corresponding records could be investigated in BigQuery.
+
+The log-export configuration is documented in the original exercise notes; the accompanying screenshot preserves the expanded audit event rather than the Log Router configuration screen.
+
+#### Security Relevance
+
+Cloud Audit Logs provide valuable information for investigating destructive administrative actions.
+
+The combination of operation names, affected resources, principal information, and timestamps can support investigation timelines and help analysts identify accounts requiring further review.
+
+Exporting logs to BigQuery enables more flexible SQL-based filtering and correlation across larger sets of audit records.
+
+However, a logged principal identity does not independently establish who physically performed an action or whether the operation was malicious.
+
+#### Analyst Assessment
+
+**Assessment: Structured audit-event fields identified and an export workflow established for subsequent BigQuery analysis.**
+
+The expanded Cloud Storage deletion record exposed relevant administrative metadata, including the service, operation, resource, and attribution-related fields.
+
+The exercise then established a Log Router workflow for analyzing subsequent audit activity in BigQuery.
+
+The next findings examine the resulting SQL queries and their evidence.
