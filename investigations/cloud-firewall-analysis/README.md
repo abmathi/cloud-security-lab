@@ -451,3 +451,116 @@ The expanded rule details identified an ingress Deny action at priority `1000`, 
 These observations directly connected the configured HTTP deny rule to a recorded enforcement outcome.
 
 The next phase independently compares allowed and denied HTTP events to evaluate how the observed traffic behavior changed during the exercise.
+
+### Finding 4 — Independent Before-and-After Traffic Validation
+
+#### Investigation Context
+
+Following the guided firewall configuration and denied-connection investigation, I performed an independent analysis of the available network security telemetry.
+
+The guided exercise demonstrated how to configure HTTP allow and deny rules and examine individual firewall events.
+
+The independent objective was to compare observed connection outcomes before and after the HTTP deny rule was introduced.
+
+Rather than filtering exclusively for denied traffic, I broadened the log query to retrieve relevant HTTP traffic regardless of its firewall disposition.
+
+This approach allowed the returned telemetry to demonstrate whether both permitted and denied connections had been recorded.
+
+#### Independent Investigation Methodology
+
+I returned to Google Cloud Logs Explorer and modified the investigation query.
+
+The query was scoped to the test source IP address and destination port `80`, without specifying an `ALLOWED` or `DENIED` disposition.
+
+The query also did not explicitly restrict the results to a single log name.
+
+The intention was to identify available telemetry associated with the HTTP test activity while avoiding a disposition filter that might exclude relevant events.
+
+The source IP address was not preserved in the visible screenshot and is therefore not reproduced in this report.
+
+The query returned firewall logging events with different recorded dispositions.
+
+#### Observed Firewall Events
+
+The preserved screenshot displayed two expanded firewall log entries.
+
+| Evidence Attribute | Earlier Event | Later Event |
+| --- | --- | --- |
+| Event date | September 21, 2026 | September 21, 2026 |
+| Displayed time | `22:22:32.334` | `22:32:07.569` |
+| Log source | `compute.googleapis.com/firewall` | `compute.googleapis.com/firewall` |
+| Disposition | `ALLOWED` | `DENIED` |
+| Connection details | Collapsed | Collapsed |
+| Firewall rule details | Collapsed | Collapsed |
+
+![Before-and-after HTTP firewall traffic comparison](evidence/05-http-allowed-denied-traffic-comparison.png)
+
+*Figure 5 — Independent Cloud Logging analysis showing an earlier firewall event with disposition `ALLOWED` at 22:22:32.334 and a later event with disposition `DENIED` at 22:32:07.569. Both entries are from September 21, 2026. Connection and rule details remain collapsed.*
+
+Both records included a `jsonPayload.disposition` field.
+
+The earlier event displayed:
+
+```text
+disposition: "ALLOWED"
+```
+
+The later event displayed:
+
+```text
+disposition: "DENIED"
+```
+
+The screenshot therefore established that the investigation query returned an earlier permitted connection and a later denied connection.
+
+The timestamps showed the chronological sequence of these events in the displayed logging results.
+
+#### Before-and-After Analysis
+
+The independent exercise compared traffic observed during two stages of the firewall configuration workflow.
+
+The first stage involved an HTTP allow rule intended to permit connections to the Apache web server.
+
+The second stage introduced an HTTP deny rule that overlapped with the existing allow rule.
+
+The independent log review identified an `ALLOWED` event followed by a `DENIED` event.
+
+| Investigation Stage | Observed Evidence | Interpretation |
+| --- | --- | --- |
+| Earlier traffic | Firewall event with `ALLOWED` disposition | A connection was permitted by an applicable firewall rule |
+| Later traffic | Firewall event with `DENIED` disposition | A connection was blocked by an applicable firewall rule |
+| Supporting rule analysis | Finding 3 attributed a denied HTTP event to `deny-http` | The configured deny rule was observed enforcing an HTTP restriction |
+
+The results were consistent with the exercise's intended transition from allowing HTTP traffic to denying HTTP traffic.
+
+However, the independent comparison screenshot did not expand the connection or rule details for either event.
+
+It therefore did not independently prove that the two connections had identical source and destination attributes, nor did it identify the enforcing rule for both events.
+
+The earlier and later dispositions were evaluated together with the guided lab sequence and the separate denied-connection attribution established in Finding 3.
+
+#### Security Relevance
+
+This independent analysis demonstrated the value of querying security telemetry without unnecessarily restricting the expected outcome.
+
+Searching only for denied connections can establish whether a blocking event occurred, but it may conceal earlier permitted traffic that provides useful context.
+
+By removing the disposition filter, I was able to compare different enforcement outcomes in the same investigation.
+
+This approach is useful for security operations because it can help analysts evaluate changes in firewall behavior, identify unexpected access results, and validate whether security controls are producing the intended outcomes.
+
+The same principle applies to investigations involving authentication events, endpoint detections, network segmentation, and other security controls.
+
+However, meaningful before-and-after validation requires attention to event timestamps, connection attributes, rule details, and any changes to the surrounding infrastructure.
+
+#### Analyst Assessment
+
+**Assessment: Independent firewall-log comparison identified an earlier `ALLOWED` event followed by a later `DENIED` event during the HTTP restriction exercise.**
+
+The preserved screenshot showed two firewall logging records with different dispositions and distinct timestamps.
+
+The independent query did not filter for either disposition, allowing both outcomes to appear in the returned results.
+
+Together with the separately documented `deny-http` rule attribution in Finding 3, the evidence supported the conclusion that HTTP denial was observed during the exercise.
+
+The comparison demonstrated a change in observed firewall enforcement outcomes, while remaining limited to the preserved log events rather than proving that every possible HTTP connection was blocked.
