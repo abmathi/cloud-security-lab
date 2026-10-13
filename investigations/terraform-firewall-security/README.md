@@ -315,3 +315,121 @@ The Terraform execution plan proposed creating three resources, including the VP
 The deployed firewall permitted ICMP and TCP ports `80`, `8080`, and `1000-2000`, matching the original configuration.
 
 The review established a baseline for independently narrowing the firewall's permitted ports while documenting the source-tag restriction and disabled firewall logging.
+
+### Finding 3 — Independent Firewall Hardening Through Terraform
+
+#### Investigation Context
+
+Following the initial Terraform deployment, I conducted an independent security review of the VPC firewall configuration.
+
+The original firewall permitted TCP ports `80`, `8080`, and `1000-2000`, as well as ICMP, from sources matching the `web` network tag.
+
+Under the independent exercise's assumed application requirements, TCP ports `80` and `8080` were necessary, while the broader TCP range `1000-2000` was not.
+
+The objective was to reduce unnecessary network permissions through Terraform without replacing the existing VPC or firewall resources.
+
+#### Security Issue Identified
+
+The original Terraform configuration contained the following TCP allowance:
+
+```hcl
+allow {
+  protocol = "tcp"
+  ports    = ["80", "8080", "1000-2000"]
+}
+```
+
+The inclusion of `1000-2000` permitted a substantially broader set of TCP destination ports than the assumed application requirements justified.
+
+Although the rule was restricted to eligible sources with the `web` network tag, unnecessary port allowances could still increase exposure between matching cloud resources.
+
+The preserved evidence did not establish that services were listening on those ports or that the additional access had been exploited.
+
+#### Terraform Configuration Modification
+
+I modified the TCP allowance in `main.tf` to retain only the assumed required ports:
+
+```hcl
+allow {
+  protocol = "tcp"
+  ports    = ["80", "8080"]
+}
+```
+
+The independent modification removed TCP ports `1000-2000` while preserving the application ports `80` and `8080`.
+
+The intended change did not require creating a new firewall or VPC network.
+
+#### Terraform Change Validation
+
+After editing the configuration, I ran:
+
+```bash
+terraform plan
+```
+
+Terraform refreshed the existing resource state and produced an execution plan identifying an in-place update to:
+
+`google_compute_firewall.default`
+
+The plan displayed removal of the original TCP `allow` block containing ports `80`, `8080`, and `1000-2000`, followed by the addition of a TCP `allow` block containing only `80` and `8080`.
+
+An unchanged firewall configuration block was hidden in the plan output.
+
+The execution plan reported:
+
+```text
+Plan: 0 to add, 1 to change, 0 to destroy.
+```
+
+| Terraform Plan Attribute | Observed Result |
+| --- | --- |
+| Resource | `google_compute_firewall.default` |
+| Firewall name | `test-firewall-helping-liger` |
+| Planned operation | Update in place |
+| TCP ports removed from permitted configuration | `1000-2000` |
+| TCP ports retained | `80`, `8080` |
+| Resources to add | 0 |
+| Resources to change | 1 |
+| Resources to destroy | 0 |
+
+![Terraform firewall hardening execution plan](evidence/04-terraform-firewall-hardening-plan.png)
+
+*Figure 4 — Terraform plan showing an in-place update to `google_compute_firewall.default`, removing TCP ports `1000-2000` while retaining ports `80` and `8080`. The plan reports zero additions, one change, and zero destructions.*
+
+The plan indicated that Terraform could modify the existing firewall resource without replacing it.
+
+This was a useful change-control checkpoint because it allowed the proposed modifications to be reviewed before deployment.
+
+The preserved screenshot does not show a completed `terraform apply` operation.
+
+#### Security Impact
+
+The proposed modification followed the principle of least privilege by narrowing the set of TCP ports permitted by the firewall.
+
+| Security Consideration | Original Configuration | Proposed Configuration |
+| --- | --- | --- |
+| TCP port `80` | Allowed | Allowed |
+| TCP port `8080` | Allowed | Allowed |
+| TCP ports `1000-2000` | Allowed | Removed from allowance |
+| ICMP | Allowed | No change indicated |
+| Source restriction | `web` network tag | No change indicated |
+| Firewall resource | Existing firewall | Update in place |
+
+Removing the unnecessary TCP range would reduce the permitted network traffic from matching sources, assuming no other applicable rules independently allowed those ports.
+
+The change did not establish that application connectivity remained functional, because no application testing was preserved in this evidence.
+
+It also did not address the previously observed disabled firewall rule logging.
+
+#### Analyst Assessment
+
+**Assessment: Terraform plan successfully identified an in-place firewall hardening change that removed the unnecessary TCP port range `1000-2000`.**
+
+The independent review identified an opportunity to narrow network permissions while retaining the assumed required application ports.
+
+The Terraform plan showed one resource modification with no resource additions or destructions.
+
+The result demonstrated how Infrastructure as Code can support controlled security changes and allow analysts to inspect proposed modifications before deployment.
+
+The next phase verifies whether the updated firewall configuration was reflected in Google Cloud.
